@@ -12,7 +12,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "eslint .",
 		"test:e2e": "playwright install && playwright test",
-		"test": "npm run test:e2e"
+		"test": "bun run test:e2e",
+		"db:types": "cp ../superplantilla/src/lib/supabase/database.types.ts src/lib/supabase/database.types.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

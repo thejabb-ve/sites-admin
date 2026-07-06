@@ -31,8 +31,9 @@ export default defineConfig(
 		}
 	},
 	{
-		// Override or add rule settings here, such as:
-		// 'svelte/button-has-type': 'error'
-		rules: {}
+		rules: {
+			// Los <a href> normales de SvelteKit no necesitan resolve()
+			'svelte/no-navigation-without-resolve': 'off'
+		}
 	}
 );
