@@ -14,6 +14,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	});
 
+	// @supabase/ssr usa lazy session init (skipAutoInitialize: true).
+	// SvelteKit corre el load del layout y el de la página en paralelo, así que
+	// si no cargamos la sesión aquí, las queries de la página llegan como anon.
+	await event.locals.supabase.auth.getSession();
+
 	// Valida el JWT contra el servidor (no confía solo en la cookie local)
 	event.locals.safeGetSession = async () => {
 		const {
