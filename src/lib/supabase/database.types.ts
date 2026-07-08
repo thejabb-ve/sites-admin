@@ -438,11 +438,17 @@ export type Database = {
       }
       pages: {
         Row: {
+          archived_at: string | null
+          canonical_url: string | null
           created_at: string
           full_path: string
           id: string
+          og_description: string | null
+          og_image_url: string | null
+          og_title: string | null
           parent_id: string | null
           project_id: string
+          robots: string
           seo_description: string | null
           seo_title: string | null
           slug: string
@@ -451,11 +457,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          canonical_url?: string | null
           created_at?: string
           full_path: string
           id?: string
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
           parent_id?: string | null
           project_id: string
+          robots?: string
           seo_description?: string | null
           seo_title?: string | null
           slug: string
@@ -464,11 +476,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          canonical_url?: string | null
           created_at?: string
           full_path?: string
           id?: string
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
           parent_id?: string | null
           project_id?: string
+          robots?: string
           seo_description?: string | null
           seo_title?: string | null
           slug?: string
@@ -620,27 +638,45 @@ export type Database = {
       }
       projects: {
         Row: {
+          canonical_domain: string | null
           created_at: string
+          default_robots: string
           features: Json
+          ga4_id: string | null
           id: string
           name: string
+          site_name: string | null
           slug: string
+          title_separator: string
+          twitter_handle: string | null
           updated_at: string
         }
         Insert: {
+          canonical_domain?: string | null
           created_at?: string
+          default_robots?: string
           features?: Json
+          ga4_id?: string | null
           id?: string
           name: string
+          site_name?: string | null
           slug: string
+          title_separator?: string
+          twitter_handle?: string | null
           updated_at?: string
         }
         Update: {
+          canonical_domain?: string | null
           created_at?: string
+          default_robots?: string
           features?: Json
+          ga4_id?: string | null
           id?: string
           name?: string
+          site_name?: string | null
           slug?: string
+          title_separator?: string
+          twitter_handle?: string | null
           updated_at?: string
         }
         Relationships: []

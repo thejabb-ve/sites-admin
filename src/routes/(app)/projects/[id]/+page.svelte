@@ -13,7 +13,35 @@
 		<span class="text-gray-900 font-medium">{data.project.name}</span>
 	</div>
 
-	<h1 class="text-xl font-semibold text-gray-900">{data.project.name}</h1>
+	<div class="flex items-center justify-between flex-wrap gap-3">
+		<h1 class="text-xl font-semibold text-gray-900">{data.project.name}</h1>
+		<div class="flex items-center gap-2">
+			<a
+				href="/projects/{data.project.id}/pages"
+				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			>
+				Páginas
+			</a>
+			<a
+				href="/projects/{data.project.id}/assets"
+				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			>
+				Assets
+			</a>
+			<a
+				href="/projects/{data.project.id}/brand"
+				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			>
+				Marca
+			</a>
+			<a
+				href="/projects/{data.project.id}/settings"
+				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			>
+				Configuración
+			</a>
+		</div>
+	</div>
 
 	<!-- Dominios -->
 	<section>

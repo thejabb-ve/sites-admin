@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { LayoutData } from './$types';
+	import Toaster from '$lib/components/Toaster.svelte';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 </script>
@@ -26,3 +27,5 @@
 		{@render children()}
 	</main>
 </div>
+
+<Toaster />

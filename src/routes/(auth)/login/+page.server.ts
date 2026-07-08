@@ -20,9 +20,15 @@ export const actions: Actions = {
 			});
 		}
 
-		const data = await request.formData();
-		const email = String(data.get('email') ?? '');
+		const data     = await request.formData();
+		const email    = String(data.get('email') ?? '');
 		const password = String(data.get('password') ?? '');
+		const honeypot = data.get('hp_field');
+
+		// Bot detectado: el campo honeypot solo lo marcan scripts automatizados.
+		if (honeypot === 'on') {
+			return fail(400, { error: 'Credenciales inválidas.' });
+		}
 
 		if (!email || !password) {
 			return fail(400, { error: 'Email y contraseña son requeridos.' });
