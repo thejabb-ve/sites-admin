@@ -35,6 +35,12 @@
 				Marca
 			</a>
 			<a
+				href="/projects/{data.project.id}/template"
+				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			>
+				Plantilla
+			</a>
+			<a
 				href="/projects/{data.project.id}/settings"
 				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
 			>

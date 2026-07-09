@@ -171,6 +171,14 @@
 								</button>
 							</form>
 
+							<!-- Bloques -->
+							<a
+								href="/projects/{data.project.id}/pages/{page.id}/blocks"
+								class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+							>
+								Bloques
+							</a>
+
 							<!-- SEO -->
 							<a
 								href="/projects/{data.project.id}/pages/{page.id}/metadata"

@@ -642,7 +642,9 @@ export type Database = {
           created_at: string
           default_robots: string
           features: Json
+          footer_props: Json
           ga4_id: string | null
+          header_props: Json
           id: string
           name: string
           site_name: string | null
@@ -656,7 +658,9 @@ export type Database = {
           created_at?: string
           default_robots?: string
           features?: Json
+          footer_props?: Json
           ga4_id?: string | null
+          header_props?: Json
           id?: string
           name: string
           site_name?: string | null
@@ -670,7 +674,9 @@ export type Database = {
           created_at?: string
           default_robots?: string
           features?: Json
+          footer_props?: Json
           ga4_id?: string | null
+          header_props?: Json
           id?: string
           name?: string
           site_name?: string | null
