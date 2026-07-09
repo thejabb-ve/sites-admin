@@ -26,7 +26,19 @@ export interface BrandDraft {
 	shadows:   Record<string, string>;
 	spacing:   { scale?: number };
 	layout:    { max_width_content?: string; max_width_prose?: string };
-	legal_info: { address?: string; legalLinks?: { label: string; href: string }[] };
+	legal_info: {
+		address?:       string;
+		legal_name?:    string;
+		tax_id?:        string;
+		business_type?: string;
+		postal_code?:   string;
+		city?:          string;
+		state?:         string;
+		country?:       string;
+		email?:         string;
+		phone?:         string;
+		legalLinks?:    { label: string; href: string }[];
+	};
 	custom_css: string | null;
 }
 
@@ -67,8 +79,17 @@ const draftSchema = z.object({
 		max_width_prose:   z.string().optional(),
 	}),
 	legal_info:  z.object({
-		address:    z.string().optional(),
-		legalLinks: z.array(z.object({ label: z.string(), href: z.string() })).optional(),
+		address:       z.string().optional(),
+		legal_name:    z.string().optional(),
+		tax_id:        z.string().optional(),
+		business_type: z.string().optional(),
+		postal_code:   z.string().optional(),
+		city:          z.string().optional(),
+		state:         z.string().optional(),
+		country:       z.string().optional(),
+		email:         z.string().optional(),
+		phone:         z.string().optional(),
+		legalLinks:    z.array(z.object({ label: z.string(), href: z.string() })).optional(),
 	}),
 	custom_css:  z.string().nullable(),
 });
@@ -125,13 +146,24 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			.order('domain'),
 	]);
 
-	// URL del preview: dominio activo o canonical_domain
+	// URL del preview: dominio activo o canonical_domain — nunca localhost
+	function isLocalhost(s: string): boolean {
+		try {
+			const u = new URL(s.includes('://') ? s : `https://${s}`);
+			return u.hostname === 'localhost' || u.hostname === '127.0.0.1'
+				|| u.hostname.endsWith('.local') || /^\[?::1\]?$/.test(u.hostname);
+		} catch { return true; }
+	}
+
 	const activeDomain = (domains ?? []).find(d => d.is_active)?.domain
 		?? (domains ?? [])[0]?.domain
 		?? null;
-	const previewUrl = activeDomain
-		? `https://${activeDomain}`
-		: (project.canonical_domain ?? null);
+	const previewUrl = (() => {
+		if (activeDomain && !isLocalhost(activeDomain)) return `https://${activeDomain}`;
+		const canon = project.canonical_domain ?? null;
+		if (canon && !isLocalhost(canon)) return canon;
+		return null;
+	})();
 
 	// Estado efectivo: campos publicados + draft_overrides encima (si existen)
 	let effectiveState: BrandDraft | null = null;
