@@ -117,7 +117,7 @@ describe('NestedObjectEditor — callbacks', () => {
     await fireEvent.input(input);
 
     expect(onUpdate).toHaveBeenCalledTimes(1);
-    const [called] = onUpdate.mock.calls[0] as [Record<string, unknown>];
+    const [called] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>];
     expect(called['title']).toBe('Nuevo título');
   });
 
@@ -131,7 +131,7 @@ describe('NestedObjectEditor — callbacks', () => {
     input.value = 'Cambiado';
     await fireEvent.input(input);
 
-    const [called] = onUpdate.mock.calls[0] as [Record<string, unknown>];
+    const [called] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>];
     expect(called['description']).toBe(PHASE_VALUE.description);
     expect(called['count']).toBe(PHASE_VALUE.count);
   });
@@ -146,7 +146,7 @@ describe('NestedObjectEditor — callbacks', () => {
     checkbox.checked = true;
     await fireEvent.change(checkbox);
 
-    const [called] = onUpdate.mock.calls[0] as [Record<string, unknown>];
+    const [called] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>];
     expect(called['active']).toBe(true);
   });
 
@@ -160,7 +160,7 @@ describe('NestedObjectEditor — callbacks', () => {
     input.value = '7';
     await fireEvent.input(input);
 
-    const [called] = onUpdate.mock.calls[0] as [Record<string, unknown>];
+    const [called] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>];
     expect(called['count']).toBe(7);
   });
 });

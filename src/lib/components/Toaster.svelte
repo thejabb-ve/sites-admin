@@ -26,6 +26,7 @@
 			class="pointer-events-auto flex items-start gap-3 min-w-72 max-w-sm px-4 py-3 rounded-lg border-l-4 shadow-lg {styles[t.type]} animate-in"
 		>
 			<span class="flex-shrink-0 mt-0.5 {iconStyles[t.type]}">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html icons[t.type]}
 			</span>
 			<p class="flex-1 text-sm font-medium leading-snug">{t.message}</p>

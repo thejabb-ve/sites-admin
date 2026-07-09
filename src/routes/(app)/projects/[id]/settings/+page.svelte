@@ -2,10 +2,10 @@
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast.svelte';
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 	import type { ActionResult } from '@sveltejs/kit';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let ga4Id          = $state(untrack(() => data.project.ga4_id          ?? ''));
 	let siteName       = $state(untrack(() => data.project.site_name        ?? ''));

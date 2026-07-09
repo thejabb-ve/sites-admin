@@ -110,7 +110,7 @@ describe('ArrayObjectEditor — callbacks', () => {
     await fireEvent.click(screen.getByText('+ Añadir elemento'));
 
     expect(onUpdate).toHaveBeenCalledTimes(1);
-    const [items] = onUpdate.mock.calls[0] as [unknown[]];
+    const [items] = onUpdate.mock.calls[0] as unknown as [unknown[]];
     expect(items.length).toBe(3);
   });
 
@@ -122,7 +122,7 @@ describe('ArrayObjectEditor — callbacks', () => {
 
     await fireEvent.click(screen.getByText('+ Añadir elemento'));
 
-    const [items] = onUpdate.mock.calls[0] as [Record<string, unknown>[]];
+    const [items] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
     expect(items[0]).toEqual({ question: '', answer: '' });
   });
 
@@ -136,7 +136,7 @@ describe('ArrayObjectEditor — callbacks', () => {
     await fireEvent.click(removeButtons[0]!);
 
     expect(onUpdate).toHaveBeenCalledTimes(1);
-    const [items] = onUpdate.mock.calls[0] as [unknown[]];
+    const [items] = onUpdate.mock.calls[0] as unknown as [unknown[]];
     expect(items.length).toBe(1);
   });
 
@@ -149,7 +149,7 @@ describe('ArrayObjectEditor — callbacks', () => {
     const removeButtons = container.querySelectorAll('button[aria-label="Eliminar elemento"]');
     await fireEvent.click(removeButtons[0]!);
 
-    const [items] = onUpdate.mock.calls[0] as [Record<string, unknown>[]];
+    const [items] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
     expect(items[0]).toEqual(FAQ_VALUE[1]);
   });
 
@@ -164,7 +164,7 @@ describe('ArrayObjectEditor — callbacks', () => {
     await fireEvent.input(input);
 
     expect(onUpdate).toHaveBeenCalledTimes(1);
-    const [items] = onUpdate.mock.calls[0] as [Record<string, unknown>[]];
+    const [items] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
     expect((items[0] as Record<string, unknown>)['question']).toBe('Modificada');
   });
 
@@ -185,7 +185,7 @@ describe('ArrayObjectEditor — callbacks', () => {
 
     await fireEvent.click(screen.getByText('+ Añadir elemento'));
 
-    const [items] = onUpdate.mock.calls[0] as [Record<string, unknown>[]];
+    const [items] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
     expect(items[0]).toEqual({ features: [] });
   });
 });

@@ -6,7 +6,7 @@ export interface Toast {
 	message: string;
 }
 
-let _toasts = $state<Toast[]>([]);
+const _toasts = $state<Toast[]>([]);
 let _nextId  = 0;
 
 export const toasts = {

@@ -98,7 +98,7 @@
         {:else if field.inputType === 'textarea'}
           <textarea id={inputId} rows="4" value={String(val ?? '')} oninput={(e) => updateProp(field.key, (e.target as HTMLTextAreaElement).value)} class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-y"></textarea>
         {:else if field.inputType === 'json'}
-          <textarea id={inputId} rows="4" value={JSON.stringify(val ?? {}, null, 2)} oninput={(e) => { try { updateProp(field.key, JSON.parse((e.target as HTMLTextAreaElement).value)); } catch { } }} class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs font-mono resize-y"></textarea>
+          <textarea id={inputId} rows="4" value={JSON.stringify(val ?? {}, null, 2)} oninput={(e) => { try { updateProp(field.key, JSON.parse((e.target as HTMLTextAreaElement).value)); } catch { /* JSON inválido — ignorar */ } }} class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs font-mono resize-y"></textarea>
         {:else}
           <input id={inputId} type="text" value={String(val ?? '')} oninput={(e) => updateProp(field.key, (e.target as HTMLInputElement).value)} class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
         {/if}
