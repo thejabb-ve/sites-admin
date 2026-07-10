@@ -14,10 +14,12 @@
 	let slugWasEdited = $state(false);
 
 	// Forms compartidos para acciones que requieren confirmación
-	let archivePendingId = $state('');
-	let deletePendingId  = $state('');
-	let archiveFormEl    = $state<HTMLFormElement | undefined>();
-	let deleteFormEl     = $state<HTMLFormElement | undefined>();
+	let archivePendingId    = $state('');
+	let archivePendingTitle = $state('');
+	let deletePendingId     = $state('');
+	let deletePendingTitle  = $state('');
+	let archiveFormEl       = $state<HTMLFormElement | undefined>();
+	let deleteFormEl        = $state<HTMLFormElement | undefined>();
 
 	// Diálogo de confirmación
 	let confirmOpen    = $state(false);
@@ -45,7 +47,8 @@
 			label:   'Archivar',
 			danger:  true,
 			onConfirm: async () => {
-				archivePendingId = page.id;
+				archivePendingId    = page.id;
+				archivePendingTitle = page.title;
 				await tick();
 				archiveFormEl?.requestSubmit();
 			},
@@ -59,7 +62,8 @@
 			label:   'Eliminar',
 			danger:  true,
 			onConfirm: async () => {
-				deletePendingId = page.id;
+				deletePendingId    = page.id;
+				deletePendingTitle = page.title;
 				await tick();
 				deleteFormEl?.requestSubmit();
 			},
@@ -162,6 +166,7 @@
 							<!-- Publicar / Despublicar -->
 							<form method="POST" action="?/togglePublish" use:enhance={withToast}>
 								<input type="hidden" name="page_id" value={page.id} />
+								<input type="hidden" name="page_title" value={page.title} />
 								<input type="hidden" name="new_status" value={page.status === 'published' ? 'draft' : 'published'} />
 								<button
 									type="submit"
@@ -199,6 +204,7 @@
 							<!-- Restaurar (tab archivadas) -->
 							<form method="POST" action="?/restore" use:enhance={withToast}>
 								<input type="hidden" name="page_id" value={page.id} />
+								<input type="hidden" name="page_title" value={page.title} />
 								<button
 									type="submit"
 									class="text-xs px-2 py-1 rounded border border-gray-200 text-blue-600 hover:border-blue-400 hover:text-blue-800 transition-colors"
@@ -267,7 +273,7 @@
 						oninput={(e) => { newSlug = (e.target as HTMLInputElement).value; handleSlugInput(); }}
 						required
 						placeholder="servicios"
-						pattern="[a-z0-9-]+"
+						pattern="[-a-z0-9]+"
 						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					/>
 				</div>
@@ -291,6 +297,7 @@
 	class="hidden"
 >
 	<input type="hidden" name="page_id" value={archivePendingId} />
+	<input type="hidden" name="page_title" value={archivePendingTitle} />
 </form>
 
 <form
@@ -301,6 +308,7 @@
 	class="hidden"
 >
 	<input type="hidden" name="page_id" value={deletePendingId} />
+	<input type="hidden" name="page_title" value={deletePendingTitle} />
 </form>
 
 <ConfirmDialog

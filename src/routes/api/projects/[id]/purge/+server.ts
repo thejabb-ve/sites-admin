@@ -1,4 +1,5 @@
 import type { RequestHandler } from './$types';
+import { logAudit } from '$lib/audit';
 
 const CF_API = 'https://api.cloudflare.com/client/v4';
 
@@ -37,14 +38,46 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 	// Plan Free/Pro: Cache Tag purging no disponible — se considera éxito parcial
 	if (!data.success && data.errors?.some(e => e.code === 1049)) {
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user.id,
+			actor: user.email ?? 'desconocido',
+			action: 'purge_cache',
+			resourceType: 'cache',
+			resourceName: tag,
+			status: 'ok',
+		});
 		return json({ ok: true, fallback: true }, 200);
 	}
 
 	if (!data.success) {
 		console.error('[purge] CF purge failed', { tag, errors: data.errors });
+		const errMsg = data.errors?.map((e: { code: number }) => `CF error ${e.code}`).join(', ') ?? 'CF purge failed';
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user.id,
+			actor: user.email ?? 'desconocido',
+			action: 'purge_cache',
+			resourceType: 'cache',
+			resourceName: tag,
+			status: 'error',
+			errorMessage: errMsg,
+		});
 		return json({ error: 'Error al purgar la caché en Cloudflare' }, 502);
 	}
 
+	await logAudit({
+		supabase: locals.supabase,
+		projectId: params.id,
+		userId: user.id,
+		actor: user.email ?? 'desconocido',
+		action: 'purge_cache',
+		resourceType: 'cache',
+		resourceName: tag,
+		status: 'ok',
+	});
 	return json({ ok: true }, 200);
 };
 

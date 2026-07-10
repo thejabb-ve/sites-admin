@@ -188,4 +188,32 @@ describe('ArrayObjectEditor — callbacks', () => {
     const [items] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
     expect(items[0]).toEqual({ features: [] });
   });
+
+  it('nuevo item con campo array-objects anidado tiene [] como default', async () => {
+    const fieldConSubArray: FieldDef = {
+      key:          'links',
+      required:     true,
+      inputType:    'array-objects',
+      defaultValue: null,
+      itemFields: [
+        { key: 'label',   required: true,  inputType: 'text',          defaultValue: null },
+        { key: 'href',    required: true,  inputType: 'text',          defaultValue: null },
+        { key: 'subMenu', required: false, inputType: 'array-objects', defaultValue: null,
+          itemFields: [
+            { key: 'label', required: true, inputType: 'text', defaultValue: null },
+            { key: 'href',  required: true, inputType: 'text', defaultValue: null },
+          ],
+        },
+      ],
+    };
+    const onUpdate = mock(() => {});
+    render(ArrayObjectEditor, {
+      props: { field: fieldConSubArray, value: [], onUpdate },
+    });
+
+    await fireEvent.click(screen.getByText('+ Añadir elemento'));
+
+    const [items] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
+    expect(items[0]).toEqual({ label: '', href: '', subMenu: [] });
+  });
 });

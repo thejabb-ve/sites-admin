@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod/v4';
 import type { PageServerLoad, Actions } from './$types';
+import { logAudit } from '$lib/audit';
 
 // ─── Tipos locales ────────────────────────────────────────────────────────────
 
@@ -218,6 +219,18 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al guardar borrador.' });
 
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'update',
+			resourceType: 'brand',
+			resourceName: 'Manual de marca (borrador)',
+			changed: Object.keys(result.data),
+		});
+
 		return { success: 'draft' as const };
 	},
 
@@ -259,6 +272,17 @@ export const actions: Actions = {
 			);
 
 		if (dbError) return fail(500, { error: 'Error al publicar.' });
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'publish',
+			resourceType: 'brand',
+			resourceName: 'Manual de marca',
+		});
 
 		return { success: 'published' as const };
 	},

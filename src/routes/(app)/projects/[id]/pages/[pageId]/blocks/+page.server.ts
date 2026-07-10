@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { ADMIN_BLOCK_REGISTRY } from '$lib/blocks/adminRegistry';
+import { logAudit } from '$lib/audit';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { data: project } = await locals.supabase
@@ -48,15 +49,31 @@ export const actions: Actions = {
 
 		const newOrder = (maxRow?.order ?? -1) + 1;
 
-		const { error: dbError } = await locals.supabase.from('blocks').insert({
-			page_id: params.pageId,
-			type,
-			order:   newOrder,
-			props:   ADMIN_BLOCK_REGISTRY[type]!.defaultProps as never,
-			version: 1,
-		});
+		const { data: newBlock, error: dbError } = await locals.supabase
+			.from('blocks')
+			.insert({
+				page_id: params.pageId,
+				type,
+				order:   newOrder,
+				props:   ADMIN_BLOCK_REGISTRY[type]!.defaultProps as never,
+				version: 1,
+			})
+			.select('id')
+			.single();
 
 		if (dbError) return fail(500, { error: 'Error al crear el bloque.' });
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'create',
+			resourceType: 'block',
+			resourceId: newBlock?.id,
+			resourceName: type,
+		});
 
 		return { success: true };
 	},
@@ -83,7 +100,6 @@ export const actions: Actions = {
 			return fail(400, { error: `Props inválidas: ${msgs}` });
 		}
 
-		// Verificar que el bloque pertenece a esta página (respaldo del RLS)
 		const { data: existing } = await locals.supabase
 			.from('blocks')
 			.select('id, props')
@@ -93,7 +109,6 @@ export const actions: Actions = {
 
 		if (!existing) return fail(404, { error: 'Bloque no encontrado.' });
 
-		// Guardar historial de props anteriores
 		await locals.supabase.from('blocks_history').insert({
 			block_id: blockId,
 			props:    existing.props,
@@ -107,6 +122,19 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al guardar el bloque.' });
 
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'update',
+			resourceType: 'block',
+			resourceId: blockId,
+			resourceName: blockType,
+			changed: ['props'],
+		});
+
 		return { success: true };
 	},
 
@@ -116,6 +144,13 @@ export const actions: Actions = {
 
 		if (!blockId) return fail(400, { error: 'Falta el ID del bloque.' });
 
+		const { data: block } = await locals.supabase
+			.from('blocks')
+			.select('id, type')
+			.eq('id', blockId)
+			.eq('page_id', params.pageId)
+			.single();
+
 		const { error: dbError } = await locals.supabase
 			.from('blocks')
 			.delete()
@@ -123,6 +158,18 @@ export const actions: Actions = {
 			.eq('page_id', params.pageId);
 
 		if (dbError) return fail(500, { error: 'Error al eliminar el bloque.' });
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'delete',
+			resourceType: 'block',
+			resourceId: blockId,
+			resourceName: block?.type ?? blockId,
+		});
 
 		return { success: true };
 	},
@@ -140,7 +187,6 @@ export const actions: Actions = {
 			return fail(400, { error: 'Lista de IDs vacía.' });
 		}
 
-		// Verificar que todos los IDs pertenecen a esta página
 		const { data: existing } = await locals.supabase
 			.from('blocks')
 			.select('id')
@@ -164,6 +210,18 @@ export const actions: Actions = {
 		if (results.some(r => r.error)) {
 			return fail(500, { error: 'Error al reordenar los bloques.' });
 		}
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'update',
+			resourceType: 'block',
+			resourceName: `${orderedIds.length} bloques`,
+			changed: ['order'],
+		});
 
 		return { success: true };
 	},

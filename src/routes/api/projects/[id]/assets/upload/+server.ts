@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import { waitUntil } from '@vercel/functions';
 import { CDN_WORKER_URL, CDN_UPLOAD_SECRET, SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { logAudit } from '$lib/audit';
 
 // Buffer<ArrayBufferLike> no es asignable a BlobPart en los tipos de Bun/TS.
 // Se copia a un Uint8Array<ArrayBuffer> limpio para satisfacer la restricción.
@@ -96,6 +97,17 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		console.error('[assets/upload] Supabase insert error:', dbErr?.message);
 		return json({ error: 'Error registrando asset' }, 500);
 	}
+
+	await logAudit({
+		supabase: locals.supabase,
+		projectId: params.id,
+		userId: user.id,
+		actor: user.email ?? 'desconocido',
+		action: 'create',
+		resourceType: 'asset',
+		resourceId: inserted.id,
+		resourceName: file.name,
+	});
 
 	// ── Fase 2: Sharp solo para imágenes píxel ────────────────────────────────
 

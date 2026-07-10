@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { ADMIN_BLOCK_REGISTRY } from '$lib/blocks/adminRegistry';
+import { logAudit } from '$lib/audit';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   const { data: project } = await locals.supabase
@@ -39,6 +40,18 @@ export const actions: Actions = {
       .eq('id', params.id);
 
     if (dbError) return fail(500, { error: 'Error al guardar el encabezado.' });
+
+    const { user } = await locals.safeGetSession();
+    await logAudit({
+      supabase: locals.supabase,
+      projectId: params.id,
+      userId: user?.id ?? null,
+      actor: user?.email ?? 'desconocido',
+      action: 'update',
+      resourceType: 'template',
+      resourceName: 'Encabezado',
+      changed: ['header_props'],
+    });
 
     return { success: true };
   },

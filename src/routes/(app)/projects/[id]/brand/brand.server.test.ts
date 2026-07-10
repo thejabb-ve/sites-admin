@@ -78,7 +78,10 @@ function makeFormData(fields: Record<string, string>): FormData {
 }
 
 function makeLocals() {
-	return { supabase: makeSupabase() };
+	return {
+		supabase: makeSupabase(),
+		safeGetSession: () => Promise.resolve({ user: { id: 'user-1', email: 'test@test.com' }, session: null }),
+	};
 }
 
 // ─── saveDraft ────────────────────────────────────────────────────────────

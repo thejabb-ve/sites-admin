@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { isValidGa4Id, isValidRobots } from '$lib/metadata';
+import { logAudit } from '$lib/audit';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { data: project } = await locals.supabase
@@ -30,6 +31,18 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { field: 'ga4', error: 'Error al guardar.' });
 
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'update',
+			resourceType: 'settings',
+			resourceName: 'Configuración',
+			changed: ['ga4_id'],
+		});
+
 		return { success: 'ga4' };
 	},
 
@@ -57,6 +70,18 @@ export const actions: Actions = {
 			.eq('id', params.id);
 
 		if (dbError) return fail(500, { field: 'site', error: 'Error al guardar.' });
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'update',
+			resourceType: 'settings',
+			resourceName: 'Configuración',
+			changed: ['site_name', 'title_separator', 'default_robots', 'canonical_domain', 'twitter_handle'],
+		});
 
 		return { success: 'site' };
 	},

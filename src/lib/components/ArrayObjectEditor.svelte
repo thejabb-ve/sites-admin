@@ -16,7 +16,7 @@
 	function makeEmpty(): Record<string, unknown> {
 		const item: Record<string, unknown> = {};
 		for (const f of field.itemFields ?? []) {
-			item[f.key] = f.defaultValue ?? (f.inputType === 'array-strings' ? [] : f.inputType === 'checkbox' ? false : '');
+			item[f.key] = f.defaultValue ?? (f.inputType === 'array-strings' || f.inputType === 'array-objects' ? [] : f.inputType === 'checkbox' ? false : '');
 		}
 		return item;
 	}

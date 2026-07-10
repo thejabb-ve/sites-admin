@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { isValidSlug } from '$lib/metadata';
+import { logAudit } from '$lib/audit';
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const { data: project } = await locals.supabase
@@ -37,26 +38,41 @@ export const actions: Actions = {
 			return fail(400, { error: 'El slug solo puede contener letras minúsculas, números y guiones.' });
 		}
 
-		// Leer default_robots del proyecto para usarlo en la página nueva
 		const { data: project } = await locals.supabase
 			.from('projects')
 			.select('default_robots')
 			.eq('id', params.id)
 			.single();
 
-		const { error: dbError } = await locals.supabase.from('pages').insert({
-			project_id: params.id,
-			title,
-			slug,
-			full_path: '/' + slug,
-			status:    'draft',
-			robots:    project?.default_robots ?? 'index, follow',
-		});
+		const { data: newPage, error: dbError } = await locals.supabase
+			.from('pages')
+			.insert({
+				project_id: params.id,
+				title,
+				slug,
+				full_path: '/' + slug,
+				status:    'draft',
+				robots:    project?.default_robots ?? 'index, follow',
+			})
+			.select('id, full_path')
+			.single();
 
 		if (dbError) {
 			if (dbError.code === '23505') return fail(409, { error: 'Ya existe una página con ese slug.' });
 			return fail(500, { error: 'Error al crear la página.' });
 		}
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'create',
+			resourceType: 'page',
+			resourceId: newPage.id,
+			resourceName: `${title} (${newPage.full_path})`,
+		});
 
 		return { success: 'Página creada correctamente.' };
 	},
@@ -81,12 +97,26 @@ export const actions: Actions = {
 			if (dbError.code === '23505') return fail(409, { error: 'Ya existe una página con ese slug.' });
 			return fail(500, { error: 'Error al renombrar.' });
 		}
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'update',
+			resourceType: 'page',
+			resourceId: pageId,
+			resourceName: `${title} (/${slug})`,
+			changed: ['title', 'slug'],
+		});
 	},
 
 	togglePublish: async ({ locals, params, request }) => {
 		const form      = await request.formData();
 		const pageId    = String(form.get('page_id')    ?? '');
 		const newStatus = String(form.get('new_status') ?? '');
+		const pageTitle = String(form.get('page_title') ?? '');
 
 		if (!['draft', 'published'].includes(newStatus)) {
 			return fail(400, { error: 'Estado inválido.' });
@@ -100,12 +130,26 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al cambiar estado.' });
 
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: newStatus === 'published' ? 'publish' : 'update',
+			resourceType: 'page',
+			resourceId: pageId,
+			resourceName: pageTitle || pageId,
+			changed: ['status'],
+		});
+
 		return { success: newStatus === 'published' ? 'Página publicada.' : 'Página despublicada.' };
 	},
 
 	archive: async ({ locals, params, request }) => {
-		const form   = await request.formData();
-		const pageId = String(form.get('page_id') ?? '');
+		const form      = await request.formData();
+		const pageId    = String(form.get('page_id')    ?? '');
+		const pageTitle = String(form.get('page_title') ?? '');
 
 		const { error: dbError } = await locals.supabase
 			.from('pages')
@@ -115,12 +159,25 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al archivar.' });
 
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'archive',
+			resourceType: 'page',
+			resourceId: pageId,
+			resourceName: pageTitle || pageId,
+		});
+
 		return { success: 'Página archivada.' };
 	},
 
 	restore: async ({ locals, params, request }) => {
-		const form   = await request.formData();
-		const pageId = String(form.get('page_id') ?? '');
+		const form      = await request.formData();
+		const pageId    = String(form.get('page_id')    ?? '');
+		const pageTitle = String(form.get('page_title') ?? '');
 
 		const { error: dbError } = await locals.supabase
 			.from('pages')
@@ -130,17 +187,29 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al restaurar.' });
 
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'restore',
+			resourceType: 'page',
+			resourceId: pageId,
+			resourceName: pageTitle || pageId,
+		});
+
 		return { success: 'Página restaurada.' };
 	},
 
 	deletePage: async ({ locals, params, request }) => {
-		const form   = await request.formData();
-		const pageId = String(form.get('page_id') ?? '');
+		const form      = await request.formData();
+		const pageId    = String(form.get('page_id')    ?? '');
+		const pageTitle = String(form.get('page_title') ?? '');
 
-		// Solo se pueden eliminar páginas ya archivadas para evitar borrados accidentales.
 		const { data: page } = await locals.supabase
 			.from('pages')
-			.select('archived_at')
+			.select('archived_at, title, full_path')
 			.eq('id', pageId)
 			.eq('project_id', params.id)
 			.single();
@@ -156,6 +225,18 @@ export const actions: Actions = {
 			.eq('project_id', params.id);
 
 		if (dbError) return fail(500, { error: 'Error al eliminar la página.' });
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'delete',
+			resourceType: 'page',
+			resourceId: pageId,
+			resourceName: pageTitle || page.title || page.full_path || pageId,
+		});
 
 		return { success: 'Página eliminada permanentemente.' };
 	},

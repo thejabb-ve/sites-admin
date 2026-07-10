@@ -16,6 +16,8 @@ mock.module('@vercel/functions', () => ({
 	waitUntil: (p: Promise<void>) => { capturedWaitUntil = p; },
 }));
 
+mock.module('$lib/audit', () => ({ logAudit: async () => {} }));
+
 const mockToBuffer = mock(() => Promise.resolve(Buffer.from('fake-webp')));
 mock.module('sharp', () => ({
 	default: () => ({

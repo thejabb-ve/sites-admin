@@ -96,6 +96,59 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor: string
+          changed: string[] | null
+          created_at: string
+          error_message: string | null
+          id: string
+          project_id: string
+          resource_id: string | null
+          resource_name: string | null
+          resource_type: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor: string
+          changed?: string[] | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          project_id: string
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string
+          changed?: string[] | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          project_id?: string
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocks: {
         Row: {
           created_at: string
