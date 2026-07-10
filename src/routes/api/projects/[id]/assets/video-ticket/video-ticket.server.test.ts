@@ -104,14 +104,14 @@ describe('POST /assets/video-ticket — llamada al CDN', () => {
 	it('devuelve 502 cuando el CDN responde con error', async () => {
 		globalThis.fetch = (async () =>
 			new Response('Internal Error', { status: 500 })
-		) as typeof fetch;
+		) as unknown as typeof fetch;
 		const res = await POST(makeEvent());
 		expect(res.status).toBe(502);
 		expect((await res.json()).error).toMatch(/ticket/i);
 	});
 
 	it('devuelve 502 cuando el CDN lanza error de red', async () => {
-		globalThis.fetch = (async () => { throw new Error('Network error'); }) as typeof fetch;
+		globalThis.fetch = (async () => { throw new Error('Network error'); }) as unknown as typeof fetch;
 		const res = await POST(makeEvent());
 		expect(res.status).toBe(502);
 	});

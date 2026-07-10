@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import type { PageData } from './$types';
 	import type { ActionResult } from '@sveltejs/kit';
 
@@ -14,8 +15,10 @@
 	let canonicalDomain = $state(untrack(() => data.project.canonical_domain ?? ''));
 	let twitterHandle  = $state(untrack(() => data.project.twitter_handle   ?? ''));
 
-	let savingGa4  = $state(false);
-	let savingSite = $state(false);
+	let savingGa4    = $state(false);
+	let savingSite   = $state(false);
+	let confirmPurge = $state(false);
+	let purging      = $state(false);
 
 	function onResult(successMsg: string) {
 		return async ({ result, update }: { result: ActionResult; update: () => Promise<void> }) => {
@@ -26,6 +29,20 @@
 				toast('error', String((result.data as Record<string, unknown>).error));
 			}
 		};
+	}
+
+	async function handlePurge() {
+		confirmPurge = false;
+		purging = true;
+		try {
+			const res = await fetch(`/api/projects/${data.project.id}/purge`, { method: 'POST' });
+			if (res.ok) toast('success', 'Caché purgada correctamente.');
+			else        toast('error', 'Error al purgar la caché. Inténtalo de nuevo.');
+		} catch {
+			toast('error', 'Error de red al purgar la caché.');
+		} finally {
+			purging = false;
+		}
 	}
 
 	const titlePreview = $derived(
@@ -211,4 +228,30 @@
 			</p>
 		{/if}
 	</div>
+
+	<!-- Caché -->
+	<div class="bg-white border border-gray-200 rounded-lg p-5">
+		<h2 class="text-sm font-semibold text-gray-700 mb-1">Caché del sitio</h2>
+		<p class="text-xs text-gray-500 mb-4">
+			Fuerza la recarga de todo el sitio público desde cero.
+			Úsalo si los cambios no se reflejan después de unos segundos.
+		</p>
+		<button
+			onclick={() => confirmPurge = true}
+			disabled={purging}
+			class="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 disabled:opacity-60 transition-colors"
+		>
+			{purging ? 'Purgando…' : 'Purgar caché'}
+		</button>
+	</div>
 </div>
+
+<ConfirmDialog
+	bind:open={confirmPurge}
+	title="¿Purgar caché del sitio?"
+	message="Se invalidará la caché de todas las páginas del proyecto en Cloudflare. Los cambios serán visibles de inmediato."
+	confirmLabel="Sí, purgar"
+	danger={true}
+	onConfirm={handlePurge}
+	onCancel={() => confirmPurge = false}
+/>

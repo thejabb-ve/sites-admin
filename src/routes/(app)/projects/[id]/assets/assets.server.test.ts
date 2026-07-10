@@ -85,6 +85,8 @@ beforeEach(() => {
 	mockAssetsOrder.mockResolvedValue({ data: ASSETS, error: null } as never);
 });
 
+type LoadResult = { project: typeof PROJECT; assets: typeof ASSETS };
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('load assets — proyecto', () => {
@@ -94,7 +96,7 @@ describe('load assets — proyecto', () => {
 	});
 
 	it('devuelve el proyecto correctamente', async () => {
-		const result = await load(makeEvent());
+		const result = await load(makeEvent()) as LoadResult;
 		expect(result.project).toMatchObject({ id: 'proj-1', name: 'Proyecto Test' });
 	});
 
@@ -130,20 +132,20 @@ describe('load assets — proyecto', () => {
 
 describe('load assets — lista de assets', () => {
 	it('devuelve los assets del proyecto', async () => {
-		const result = await load(makeEvent());
+		const result = await load(makeEvent()) as LoadResult;
 		expect(result.assets).toHaveLength(2);
 		expect(result.assets[0].id).toBe('a-1');
 	});
 
 	it('devuelve array vacío cuando Supabase no devuelve assets', async () => {
 		mockAssetsOrder.mockResolvedValueOnce({ data: null, error: null } as never);
-		const result = await load(makeEvent());
+		const result = await load(makeEvent()) as LoadResult;
 		expect(result.assets).toEqual([]);
 	});
 
 	it('devuelve array vacío cuando no hay assets en el proyecto', async () => {
 		mockAssetsOrder.mockResolvedValueOnce({ data: [], error: null } as never);
-		const result = await load(makeEvent());
+		const result = await load(makeEvent()) as LoadResult;
 		expect(result.assets).toEqual([]);
 	});
 
@@ -156,14 +158,14 @@ describe('load assets — lista de assets', () => {
 	});
 
 	it('devuelve assets con thumb_url null para no-imágenes', async () => {
-		const result = await load(makeEvent());
-		const pdf = result.assets.find((a: { mime_type: string }) => a.mime_type === 'application/pdf');
+		const result = await load(makeEvent()) as LoadResult;
+		const pdf = result.assets.find((a) => a.mime_type === 'application/pdf');
 		expect(pdf?.thumb_url).toBeNull();
 	});
 
 	it('devuelve assets con thumb_url para imágenes procesadas', async () => {
-		const result = await load(makeEvent());
-		const img = result.assets.find((a: { mime_type: string }) => a.mime_type === 'image/jpeg');
+		const result = await load(makeEvent()) as LoadResult;
+		const img = result.assets.find((a) => a.mime_type === 'image/jpeg');
 		expect(img?.thumb_url).toBeTruthy();
 	});
 });
