@@ -96,6 +96,59 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor: string
+          changed: string[] | null
+          created_at: string
+          error_message: string | null
+          id: string
+          project_id: string
+          resource_id: string | null
+          resource_name: string | null
+          resource_type: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor: string
+          changed?: string[] | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          project_id: string
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string
+          changed?: string[] | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          project_id?: string
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocks: {
         Row: {
           created_at: string
@@ -382,28 +435,49 @@ export type Database = {
       }
       domains: {
         Row: {
+          cf_cache_rule_id: string | null
+          cf_redirect_rule_id: string | null
+          cf_zone_id: string | null
           created_at: string
+          dns_verified_at: string | null
           domain: string
+          error_message: string | null
           id: string
           is_active: boolean
           is_primary: boolean
           project_id: string
+          status: string
+          vercel_domain_id: string | null
         }
         Insert: {
+          cf_cache_rule_id?: string | null
+          cf_redirect_rule_id?: string | null
+          cf_zone_id?: string | null
           created_at?: string
+          dns_verified_at?: string | null
           domain: string
+          error_message?: string | null
           id?: string
           is_active?: boolean
           is_primary?: boolean
           project_id: string
+          status?: string
+          vercel_domain_id?: string | null
         }
         Update: {
+          cf_cache_rule_id?: string | null
+          cf_redirect_rule_id?: string | null
+          cf_zone_id?: string | null
           created_at?: string
+          dns_verified_at?: string | null
           domain?: string
+          error_message?: string | null
           id?: string
           is_active?: boolean
           is_primary?: boolean
           project_id?: string
+          status?: string
+          vercel_domain_id?: string | null
         }
         Relationships: [
           {
@@ -438,11 +512,17 @@ export type Database = {
       }
       pages: {
         Row: {
+          archived_at: string | null
+          canonical_url: string | null
           created_at: string
           full_path: string
           id: string
+          og_description: string | null
+          og_image_url: string | null
+          og_title: string | null
           parent_id: string | null
           project_id: string
+          robots: string
           seo_description: string | null
           seo_title: string | null
           slug: string
@@ -451,11 +531,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          canonical_url?: string | null
           created_at?: string
           full_path: string
           id?: string
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
           parent_id?: string | null
           project_id: string
+          robots?: string
           seo_description?: string | null
           seo_title?: string | null
           slug: string
@@ -464,11 +550,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          canonical_url?: string | null
           created_at?: string
           full_path?: string
           id?: string
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
           parent_id?: string | null
           project_id?: string
+          robots?: string
           seo_description?: string | null
           seo_title?: string | null
           slug?: string
@@ -620,27 +712,51 @@ export type Database = {
       }
       projects: {
         Row: {
+          canonical_domain: string | null
           created_at: string
+          default_robots: string
           features: Json
+          footer_props: Json
+          ga4_id: string | null
+          header_props: Json
           id: string
           name: string
+          site_name: string | null
           slug: string
+          title_separator: string
+          twitter_handle: string | null
           updated_at: string
         }
         Insert: {
+          canonical_domain?: string | null
           created_at?: string
+          default_robots?: string
           features?: Json
+          footer_props?: Json
+          ga4_id?: string | null
+          header_props?: Json
           id?: string
           name: string
+          site_name?: string | null
           slug: string
+          title_separator?: string
+          twitter_handle?: string | null
           updated_at?: string
         }
         Update: {
+          canonical_domain?: string | null
           created_at?: string
+          default_robots?: string
           features?: Json
+          footer_props?: Json
+          ga4_id?: string | null
+          header_props?: Json
           id?: string
           name?: string
+          site_name?: string | null
           slug?: string
+          title_separator?: string
+          twitter_handle?: string | null
           updated_at?: string
         }
         Relationships: []

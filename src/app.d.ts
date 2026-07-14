@@ -14,4 +14,10 @@ declare global {
 	}
 }
 
+declare module '$env/static/private' {
+	const CDN_WORKER_URL: string;
+	const CDN_UPLOAD_SECRET: string;
+	const SUPABASE_SERVICE_ROLE_KEY: string;
+}
+
 export {};

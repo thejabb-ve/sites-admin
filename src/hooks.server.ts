@@ -14,19 +14,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	});
 
-	// Valida el JWT contra el servidor (no confía solo en la cookie local)
+	// getUser() valida el JWT contra el servidor Auth (fuente de verdad).
+	// getSession() solo se llama si el usuario ya está confirmado, para hidratar el cliente.
 	event.locals.safeGetSession = async () => {
-		const {
-			data: { session }
-		} = await event.locals.supabase.auth.getSession();
-		if (!session) return { session: null, user: null };
-
 		const {
 			data: { user },
 			error
 		} = await event.locals.supabase.auth.getUser();
-		if (error) return { session: null, user: null };
+		if (error || !user) return { session: null, user: null };
 
+		const {
+			data: { session }
+		} = await event.locals.supabase.auth.getSession();
 		return { session, user };
 	};
 
