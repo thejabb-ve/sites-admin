@@ -7,7 +7,9 @@ export type AuditAction =
 	| 'publish'
 	| 'archive'
 	| 'restore'
-	| 'purge_cache';
+	| 'purge_cache'
+	| 'configure'
+	| 'disconnect';
 
 export type AuditResourceType =
 	| 'page'
@@ -16,7 +18,8 @@ export type AuditResourceType =
 	| 'settings'
 	| 'template'
 	| 'block'
-	| 'cache';
+	| 'cache'
+	| 'domain';
 
 interface AuditParams {
 	supabase: SupabaseClient;

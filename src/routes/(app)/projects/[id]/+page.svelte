@@ -11,6 +11,8 @@
 		archive:     'Archivar',
 		restore:     'Restaurar',
 		purge_cache: 'Purgar caché',
+		configure:   'Configurar',
+		disconnect:  'Desconectar',
 	};
 
 	const RESOURCE_LABELS: Record<string, string> = {
@@ -21,6 +23,7 @@
 		template: 'Plantilla',
 		block:    'Bloque',
 		cache:    'Caché',
+		domain:   'Dominio',
 	};
 
 	const TYPE_FILTERS = [
@@ -32,6 +35,7 @@
 		{ value: 'template', label: 'Plantilla' },
 		{ value: 'block',    label: 'Bloques' },
 		{ value: 'cache',    label: 'Caché' },
+		{ value: 'domain',   label: 'Dominios' },
 	];
 
 	function formatDate(iso: string) {
@@ -84,6 +88,12 @@
 				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
 			>
 				Plantilla
+			</a>
+			<a
+				href="/projects/{data.project.id}/domains"
+				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			>
+				Dominios
 			</a>
 			<a
 				href="/projects/{data.project.id}/settings"

@@ -435,28 +435,49 @@ export type Database = {
       }
       domains: {
         Row: {
+          cf_cache_rule_id: string | null
+          cf_redirect_rule_id: string | null
+          cf_zone_id: string | null
           created_at: string
+          dns_verified_at: string | null
           domain: string
+          error_message: string | null
           id: string
           is_active: boolean
           is_primary: boolean
           project_id: string
+          status: string
+          vercel_domain_id: string | null
         }
         Insert: {
+          cf_cache_rule_id?: string | null
+          cf_redirect_rule_id?: string | null
+          cf_zone_id?: string | null
           created_at?: string
+          dns_verified_at?: string | null
           domain: string
+          error_message?: string | null
           id?: string
           is_active?: boolean
           is_primary?: boolean
           project_id: string
+          status?: string
+          vercel_domain_id?: string | null
         }
         Update: {
+          cf_cache_rule_id?: string | null
+          cf_redirect_rule_id?: string | null
+          cf_zone_id?: string | null
           created_at?: string
+          dns_verified_at?: string | null
           domain?: string
+          error_message?: string | null
           id?: string
           is_active?: boolean
           is_primary?: boolean
           project_id?: string
+          status?: string
+          vercel_domain_id?: string | null
         }
         Relationships: [
           {
