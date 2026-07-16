@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast.svelte';
+	import AssetPicker from '$lib/components/AssetPicker.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import type { PageData } from './$types';
 	import type { ActionResult } from '@sveltejs/kit';
@@ -14,9 +15,12 @@
 	let defaultRobots  = $state(untrack(() => data.project.default_robots   ?? 'index, follow'));
 	let canonicalDomain = $state(untrack(() => data.project.canonical_domain ?? ''));
 	let twitterHandle  = $state(untrack(() => data.project.twitter_handle   ?? ''));
+	let faviconUrl     = $state(untrack(() => data.brand?.favicon_url  ?? ''));
+	let ogImageUrl     = $state(untrack(() => data.brand?.og_image_url ?? ''));
 
 	let savingGa4    = $state(false);
 	let savingSite   = $state(false);
+	let savingAssets = $state(false);
 	let confirmPurge = $state(false);
 	let purging      = $state(false);
 
@@ -178,6 +182,56 @@
 					class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors"
 				>
 					{savingSite ? 'Guardando…' : 'Guardar identidad'}
+				</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Activos SEO -->
+	<div class="bg-white border border-gray-200 rounded-lg p-5">
+		<h2 class="text-sm font-semibold text-gray-700 mb-1">Activos SEO</h2>
+		<p class="text-xs text-gray-500 mb-4">
+			Favicon y imagen Open Graph por defecto para todas las páginas del sitio.
+		</p>
+
+		<form
+			method="POST"
+			action="?/saveAssets"
+			use:enhance={() => {
+				savingAssets = true;
+				return async (ctx) => { await onResult('Activos SEO guardados correctamente.')(ctx); savingAssets = false; };
+			}}
+			class="space-y-4"
+		>
+			<input type="hidden" name="favicon_url"  value={faviconUrl} />
+			<input type="hidden" name="og_image_url" value={ogImageUrl} />
+
+			<div>
+				<p class="block text-xs text-gray-600 mb-2">Favicon</p>
+				<AssetPicker
+					value={faviconUrl}
+					onSelect={(url) => { faviconUrl = url; }}
+				/>
+			</div>
+
+			<div>
+				<p class="block text-xs text-gray-600 mb-2">
+					Imagen Open Graph por defecto
+					<span class="text-gray-400">(se usa cuando una página no tiene OG image propia)</span>
+				</p>
+				<AssetPicker
+					value={ogImageUrl}
+					onSelect={(url) => { ogImageUrl = url; }}
+				/>
+			</div>
+
+			<div class="flex justify-end">
+				<button
+					type="submit"
+					disabled={savingAssets}
+					class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors"
+				>
+					{savingAssets ? 'Guardando…' : 'Guardar activos'}
 				</button>
 			</div>
 		</form>

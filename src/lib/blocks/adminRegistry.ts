@@ -49,7 +49,14 @@ export const ADMIN_BLOCK_REGISTRY: Record<string, AdminBlockEntry> = {
     scope: 'site',
     defaultProps: { links: [], ctaLabel: '', ctaHref: '' },
     schema: HeaderPropsSchema,
-    fieldOverrides: { logo: { inputType: 'asset-picker' } },
+    fieldOverrides: {
+      logo:     { inputType: 'asset-picker' },
+      logoDark: { inputType: 'asset-picker' },
+    },
+    fieldLabels: {
+      logo:     'Logo (modo claro)',
+      logoDark: 'Logo (modo oscuro)',
+    },
   },
   'footer': {
     label: 'Pie de página',

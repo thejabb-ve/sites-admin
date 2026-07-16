@@ -14,6 +14,7 @@ const NavLinkSchema = z.object({
 
 export const HeaderPropsSchema = z.object({
   logo:     z.string().optional(),
+  logoDark: z.string().optional(),
   links:    z.array(NavLinkSchema).default([]),
   ctaLabel: z.string().optional(),
   ctaHref:  z.string().optional(),

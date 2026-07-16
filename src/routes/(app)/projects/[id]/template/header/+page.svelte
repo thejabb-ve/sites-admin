@@ -5,13 +5,18 @@
   import { ADMIN_BLOCK_REGISTRY } from '$lib/blocks/adminRegistry';
   import { schemaToFields }        from '$lib/blocks/schemaToFields';
   import ArrayObjectEditor         from '$lib/components/ArrayObjectEditor.svelte';
+  import AssetPicker               from '$lib/components/AssetPicker.svelte';
   import type { PageData }     from './$types';
   import type { ActionResult } from '@sveltejs/kit';
 
   let { data }: { data: PageData } = $props();
 
   const entry  = ADMIN_BLOCK_REGISTRY['header']!;
-  const fields = schemaToFields(entry.schema);
+  const fields = schemaToFields(entry.schema).map(f => ({
+    ...f,
+    ...(entry.fieldOverrides?.[f.key] ?? {}),
+    label: entry.fieldLabels?.[f.key] ?? f.key,
+  }));
 
   let currentProps = $state<Record<string, unknown>>(
     untrack(() => JSON.parse(JSON.stringify((data.project.header_props as Record<string, unknown>) ?? {})) as Record<string, unknown>),
@@ -64,7 +69,7 @@
       {@const inputId = `header-${field.key}`}
       <div>
         <label for={inputId} class="block text-sm font-medium text-gray-700 mb-1">
-          {field.key}{field.required ? ' *' : ''}
+          {field.label}{field.required ? ' *' : ''}
         </label>
 
         {#if field.inputType === 'array-objects'}
@@ -97,6 +102,11 @@
           <input id={inputId} type="number" value={Number(val ?? 0)} oninput={(e) => updateProp(field.key, Number((e.target as HTMLInputElement).value))} class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
         {:else if field.inputType === 'textarea'}
           <textarea id={inputId} rows="4" value={String(val ?? '')} oninput={(e) => updateProp(field.key, (e.target as HTMLTextAreaElement).value)} class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-y"></textarea>
+        {:else if field.inputType === 'asset-picker'}
+          <AssetPicker
+            value={String(val ?? '')}
+            onSelect={(url) => updateProp(field.key, url)}
+          />
         {:else if field.inputType === 'json'}
           <textarea id={inputId} rows="4" value={JSON.stringify(val ?? {}, null, 2)} oninput={(e) => { try { updateProp(field.key, JSON.parse((e.target as HTMLTextAreaElement).value)); } catch { /* JSON inválido — ignorar */ } }} class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs font-mono resize-y"></textarea>
         {:else}

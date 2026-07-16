@@ -4,15 +4,22 @@ import { isValidGa4Id, isValidRobots } from '$lib/metadata';
 import { logAudit } from '$lib/audit';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name, ga4_id, site_name, title_separator, default_robots, canonical_domain, twitter_handle')
-		.eq('id', params.id)
-		.single();
+	const [{ data: project }, { data: brand }] = await Promise.all([
+		locals.supabase
+			.from('projects')
+			.select('id, name, ga4_id, site_name, title_separator, default_robots, canonical_domain, twitter_handle')
+			.eq('id', params.id)
+			.single(),
+		locals.supabase
+			.from('brand_manuals')
+			.select('favicon_url, og_image_url')
+			.eq('project_id', params.id)
+			.single(),
+	]);
 
 	if (!project) error(404, 'Proyecto no encontrado.');
 
-	return { project };
+	return { project, brand };
 };
 
 export const actions: Actions = {
@@ -84,5 +91,32 @@ export const actions: Actions = {
 		});
 
 		return { success: 'site' };
+	},
+
+	saveAssets: async ({ locals, params, request }) => {
+		const form       = await request.formData();
+		const faviconUrl = String(form.get('favicon_url') ?? '').trim() || null;
+		const ogImageUrl = String(form.get('og_image_url') ?? '').trim() || null;
+
+		const { error: dbError } = await locals.supabase
+			.from('brand_manuals')
+			.update({ favicon_url: faviconUrl, og_image_url: ogImageUrl })
+			.eq('project_id', params.id);
+
+		if (dbError) return fail(500, { field: 'assets', error: 'Error al guardar.' });
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase: locals.supabase,
+			projectId: params.id,
+			userId: user?.id ?? null,
+			actor: user?.email ?? 'desconocido',
+			action: 'update',
+			resourceType: 'settings',
+			resourceName: 'Configuración',
+			changed: ['favicon_url', 'og_image_url'],
+		});
+
+		return { success: 'assets' };
 	},
 };
