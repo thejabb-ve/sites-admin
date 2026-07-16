@@ -16,26 +16,28 @@
 	};
 
 	const RESOURCE_LABELS: Record<string, string> = {
-		page:     'Página',
-		asset:    'Asset',
-		brand:    'Marca',
-		settings: 'Configuración',
-		template: 'Plantilla',
-		block:    'Bloque',
-		cache:    'Caché',
-		domain:   'Dominio',
+		page:            'Página',
+		asset:           'Asset',
+		brand:           'Marca',
+		settings:        'Configuración',
+		template:        'Plantilla',
+		block:           'Bloque',
+		cache:           'Caché',
+		domain:          'Dominio',
+		collection_item: 'Ítem de colección',
 	};
 
 	const TYPE_FILTERS = [
-		{ value: 'all',      label: 'Todos' },
-		{ value: 'page',     label: 'Páginas' },
-		{ value: 'asset',    label: 'Assets' },
-		{ value: 'brand',    label: 'Marca' },
-		{ value: 'settings', label: 'Configuración' },
-		{ value: 'template', label: 'Plantilla' },
-		{ value: 'block',    label: 'Bloques' },
-		{ value: 'cache',    label: 'Caché' },
-		{ value: 'domain',   label: 'Dominios' },
+		{ value: 'all',             label: 'Todos' },
+		{ value: 'page',            label: 'Páginas' },
+		{ value: 'collection_item', label: 'Colecciones' },
+		{ value: 'asset',           label: 'Assets' },
+		{ value: 'brand',           label: 'Marca' },
+		{ value: 'settings',        label: 'Configuración' },
+		{ value: 'template',        label: 'Plantilla' },
+		{ value: 'block',           label: 'Bloques' },
+		{ value: 'cache',           label: 'Caché' },
+		{ value: 'domain',          label: 'Dominios' },
 	];
 
 	function formatDate(iso: string) {
@@ -70,6 +72,12 @@
 				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
 			>
 				Páginas
+			</a>
+			<a
+				href="/projects/{data.project.id}/collections"
+				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			>
+				Colecciones
 			</a>
 			<a
 				href="/projects/{data.project.id}/assets"

@@ -39,6 +39,7 @@
 	const MAX_CONCURRENT  = 3;
 	const VIDEO_CHUNK_SIZE = 8 * 1024 * 1024;   // 8 MB
 	const VIDEO_MAX_SIZE   = 500 * 1024 * 1024;  // 500 MB
+	const SHARP_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
 	// ── Dispatch de archivos ──────────────────────────────────────────────────
 
@@ -84,9 +85,30 @@
 
 			item.status = 'done';
 			assets.unshift(body.asset);
+
+			// Si es imagen, el thumb se genera en background — hacer polling hasta que esté listo
+			if (!body.asset.thumb_url && SHARP_TYPES.has(body.asset.mime_type)) {
+				pollThumb(body.asset.id);
+			}
 		} catch {
 			item.status = 'error';
 			toast('error', `Error subiendo ${item.file.name}`);
+		}
+	}
+
+	async function pollThumb(assetId: string) {
+		const MAX_TRIES = 15; // 30 s máx
+		for (let i = 0; i < MAX_TRIES; i++) {
+			await new Promise<void>(r => setTimeout(r, 2000));
+			try {
+				const res = await fetch(`/api/projects/${project.id}/assets/${assetId}`);
+				if (!res.ok) break;
+				const { asset: updated } = await res.json() as { asset: Asset };
+				if (updated?.thumb_url) {
+					assets = assets.map(a => a.id === assetId ? { ...a, ...updated } : a);
+					break;
+				}
+			} catch { break; }
 		}
 	}
 
@@ -386,7 +408,7 @@
 			<p class="text-sm">Sube imágenes o vídeos para este proyecto</p>
 		</div>
 	{:else}
-		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+		<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
 			{#each assets as asset (asset.id)}
 				<div class="group relative rounded-lg overflow-hidden aspect-square
 					{asset.mime_type.startsWith('video/') ? 'bg-gray-900' : 'bg-gray-100'}">
@@ -422,27 +444,21 @@
 					{/if}
 
 					<!-- Overlay en hover -->
-					<div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-						<p class="text-white text-[10px] font-medium truncate leading-tight">
-							{asset.filename}
-						</p>
-						{#if asset.size_bytes}
-							<p class="text-white/60 text-[10px]">{formatBytes(asset.size_bytes)}</p>
-						{/if}
-						<div class="flex gap-1.5 mt-auto">
+					<div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end gap-1 p-1.5">
+						<div class="flex gap-1">
 							<button
 								type="button"
 								onclick={() => copyUrl(asset.url)}
 								title="Copiar URL"
-								class="flex-1 py-1 text-[10px] font-medium bg-white/20 hover:bg-white/30 text-white rounded transition-colors"
+								class="flex-1 py-0.5 text-[9px] font-medium bg-white/20 hover:bg-white/30 text-white rounded transition-colors"
 							>
-								Copiar URL
+								URL
 							</button>
 							<button
 								type="button"
 								onclick={() => askDelete(asset)}
 								title="Eliminar"
-								class="py-1 px-2 text-[10px] font-medium bg-red-500/80 hover:bg-red-500 text-white rounded transition-colors"
+								class="py-0.5 px-1.5 text-[9px] font-medium bg-red-500/80 hover:bg-red-500 text-white rounded transition-colors"
 							>
 								✕
 							</button>

@@ -23,8 +23,10 @@ export interface AdminBlockEntry {
   defaultProps:    Record<string, unknown>;
   schema:          ZodType;
   scope?:          BlockScope;
-  /** Sobreescribe el tipo de input para campos específicos */
-  fieldOverrides?: Record<string, { inputType: FieldInputType }>;
+  /** Sobreescribe el tipo de input para campos de nivel raíz */
+  fieldOverrides?:     Record<string, { inputType: FieldInputType }>;
+  /** Sobreescribe el tipo de input para sub-campos de un array-objects (clave: nombre del array → nombre del sub-campo) */
+  itemFieldOverrides?: Record<string, Record<string, { inputType: FieldInputType }>>;
   /** Etiquetas legibles para campos específicos (reemplaza la key en la UI) */
   fieldLabels?:    Record<string, string>;
 }
@@ -34,17 +36,20 @@ export const ADMIN_BLOCK_REGISTRY: Record<string, AdminBlockEntry> = {
     label: 'Hero centrado',
     defaultProps: { heading: 'Título principal', subheading: '', ctaLabel: '', ctaHref: '' },
     schema: HeroCenteredPropsSchema,
+    fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
   },
   'hero-split': {
     label: 'Hero (imagen lateral)',
     defaultProps: { heading: 'Título principal', imageUrl: '', imageAlt: '', reversed: false },
     schema: HeroSplitPropsSchema,
+    fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
   },
   'header': {
     label: 'Encabezado (navegación)',
     scope: 'site',
     defaultProps: { links: [], ctaLabel: '', ctaHref: '' },
     schema: HeaderPropsSchema,
+    fieldOverrides: { logo: { inputType: 'asset-picker' } },
   },
   'footer': {
     label: 'Pie de página',
@@ -62,6 +67,7 @@ export const ADMIN_BLOCK_REGISTRY: Record<string, AdminBlockEntry> = {
     label: 'Galería de imágenes',
     defaultProps: { images: [{ src: '', alt: '' }], columns: 3 },
     schema: GalleryPropsSchema,
+    itemFieldOverrides: { images: { src: { inputType: 'asset-picker' } } },
   },
   'featureGrid': {
     label: 'Grid de características',
@@ -82,6 +88,7 @@ export const ADMIN_BLOCK_REGISTRY: Record<string, AdminBlockEntry> = {
   },
   'countdown': {
     label: 'Hero — Cuenta regresiva',
+    fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
     fieldLabels: { duration: 'Días de aviso previo al evento' },
     defaultProps: {
       targetDate: null,

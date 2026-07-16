@@ -2,6 +2,18 @@ import type { RequestHandler } from './$types';
 import { CDN_WORKER_URL, CDN_UPLOAD_SECRET } from '$env/static/private';
 import { logAudit } from '$lib/audit';
 
+export const GET: RequestHandler = async ({ params, locals }) => {
+	const { data: asset } = await locals.supabase
+		.from('assets')
+		.select('id, key, url, thumb_url, filename, mime_type, size_bytes, created_at')
+		.eq('id', params.assetId)
+		.eq('project_id', params.id)
+		.single();
+
+	if (!asset) return json({ error: 'Asset no encontrado' }, 404);
+	return json({ asset });
+};
+
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const { user } = await locals.safeGetSession();
 	if (!user) return json({ error: 'No autenticado' }, 401);

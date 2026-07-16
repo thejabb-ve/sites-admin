@@ -6,6 +6,7 @@
 	import { schemaToFields }        from '$lib/blocks/schemaToFields';
 	import ArrayObjectEditor         from './ArrayObjectEditor.svelte';
 	import NestedObjectEditor        from './NestedObjectEditor.svelte';
+	import AssetPicker               from './AssetPicker.svelte';
 	import type { ActionResult }    from '@sveltejs/kit';
 
 	let {
@@ -19,7 +20,7 @@
 		blockType:    string;
 		initialProps: Record<string, unknown>;
 		onClose:      () => void;
-		onSaved:      () => void;
+		onSaved:      (updatedProps: Record<string, unknown>) => void;
 	} = $props();
 
 	const entry  = $derived(ADMIN_BLOCK_REGISTRY[blockType]);
@@ -27,9 +28,22 @@
 	// Combina campos auto-generados con overrides del registry
 	const fields = $derived(() => {
 		if (!entry) return [];
-		const base     = schemaToFields(entry.schema);
-		const overrides = entry.fieldOverrides ?? {};
-		return base.map(f => overrides[f.key] ? { ...f, ...overrides[f.key] } : f);
+		const base         = schemaToFields(entry.schema);
+		const overrides    = entry.fieldOverrides ?? {};
+		const itemOverrides = entry.itemFieldOverrides ?? {};
+		return base.map(f => {
+			let merged = overrides[f.key] ? { ...f, ...overrides[f.key] } : f;
+			if (merged.inputType === 'array-objects' && itemOverrides[merged.key] && merged.itemFields) {
+				const iov = itemOverrides[merged.key]!;
+				merged = {
+					...merged,
+					itemFields: merged.itemFields.map(sf =>
+						iov[sf.key] ? { ...sf, ...iov[sf.key] } : sf,
+					),
+				};
+			}
+			return merged;
+		});
 	});
 
 	// JSON.parse/stringify para evitar el error de structuredClone con Proxies de Svelte 5
@@ -67,7 +81,7 @@
 					saving = false;
 					if (result.type === 'success') {
 						toast('success', 'Bloque guardado.');
-						onSaved();
+						onSaved(currentProps);
 					} else if (result.type === 'failure') {
 						toast('error', (result.data as Record<string, string>)?.error ?? 'Error al guardar.');
 					}
@@ -92,6 +106,12 @@
 							{field}
 							value={(val ?? {}) as Record<string, unknown>}
 							onUpdate={(v: Record<string, unknown>) => updateProp(field.key, v)}
+						/>
+
+					{:else if field.inputType === 'asset-picker'}
+						<AssetPicker
+							value={String(val ?? '')}
+							onSelect={(url) => updateProp(field.key, url)}
 						/>
 
 					{:else if field.inputType === 'array-objects'}

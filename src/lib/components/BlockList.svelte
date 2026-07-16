@@ -153,7 +153,10 @@
 					blockType={block.type}
 					initialProps={block.props}
 					onClose={() => (editingId = null)}
-					onSaved={() => (editingId = null)}
+					onSaved={(updatedProps) => {
+						blocks = blocks.map(b => b.id === block.id ? { ...b, props: updatedProps } : b);
+						editingId = null;
+					}}
 				/>
 			{/if}
 
@@ -178,7 +181,10 @@
 								blockType={child.type}
 								initialProps={child.props}
 								onClose={() => (editingId = null)}
-								onSaved={() => (editingId = null)}
+								onSaved={(updatedProps) => {
+									blocks = blocks.map(b => b.id === child.id ? { ...b, props: updatedProps } : b);
+									editingId = null;
+								}}
 							/>
 						{/if}
 					</div>

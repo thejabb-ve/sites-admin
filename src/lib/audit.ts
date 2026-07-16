@@ -19,7 +19,8 @@ export type AuditResourceType =
 	| 'template'
 	| 'block'
 	| 'cache'
-	| 'domain';
+	| 'domain'
+	| 'collection_item';
 
 interface AuditParams {
 	supabase: SupabaseClient;

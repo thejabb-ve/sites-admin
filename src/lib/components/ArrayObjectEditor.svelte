@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ArrayObjectEditor  from './ArrayObjectEditor.svelte';
 	import NestedObjectEditor from './NestedObjectEditor.svelte';
+	import AssetPicker        from './AssetPicker.svelte';
 	import type { FieldDef }  from '$lib/blocks/schemaToFields';
 
 	let {
@@ -73,6 +74,12 @@
 									onUpdate={(items: Record<string, unknown>[]) => updateItemField(i, subField.key, items)}
 								/>
 							</div>
+
+						{:else if subField.inputType === 'asset-picker'}
+							<AssetPicker
+								value={String(item[subField.key] ?? '')}
+								onSelect={(url) => updateItemField(i, subField.key, url)}
+							/>
 
 						{:else if subField.inputType === 'checkbox'}
 							<input

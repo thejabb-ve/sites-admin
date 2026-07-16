@@ -1,7 +1,7 @@
 import { z } from 'zod/v4';
 import type { ZodType } from 'zod/v4';
 
-export type FieldInputType = 'text' | 'textarea' | 'number' | 'checkbox' | 'select' | 'json' | 'array-strings' | 'array-objects' | 'nested-object';
+export type FieldInputType = 'text' | 'textarea' | 'number' | 'checkbox' | 'select' | 'json' | 'array-strings' | 'array-objects' | 'nested-object' | 'asset-picker';
 
 export interface FieldDef {
   key:          string;
