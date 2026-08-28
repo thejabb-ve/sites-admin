@@ -284,15 +284,19 @@
 	let hasDraft            = $state(
 		untrack(() => data.manual?.draft_overrides !== null && data.manual?.draft_overrides !== undefined)
 	);
-	let savingDraft  = $state(false);
-	let publishing   = $state(false);
-	let confirmOpen  = $state(false);
+	let savingDraft      = $state(false);
+	let publishing       = $state(false);
+	let confirmOpen      = $state(false);
+	let confirmLegal     = $state(false);
+	let generatingLegal  = $state(false);
 
-	let draftFormEl   = $state<HTMLFormElement | undefined>();
-	let publishFormEl = $state<HTMLFormElement | undefined>();
+	let draftFormEl      = $state<HTMLFormElement | undefined>();
+	let publishFormEl    = $state<HTMLFormElement | undefined>();
+	let legalFormEl      = $state<HTMLFormElement | undefined>();
 
 	function openConfirm() { confirmOpen = true; }
 	function doPublish()   { publishFormEl?.requestSubmit(); }
+	function doGenerateLegal() { legalFormEl?.requestSubmit(); }
 
 	// ─── Helpers colores dark ──────────────────────────────────────────────────
 
@@ -381,6 +385,32 @@
 	message="Los cambios serán visibles en el sitio público inmediatamente. ¿Continuar?"
 	confirmLabel="Publicar"
 	onConfirm={doPublish}
+/>
+
+<form
+	method="POST"
+	action="?/generateLegalPages"
+	bind:this={legalFormEl}
+	use:enhance={() => {
+		generatingLegal = true;
+		return async ({ result, update }: { result: ActionResult; update: (opts?: { reset?: boolean }) => Promise<void> }) => {
+			await update({ reset: false });
+			generatingLegal = false;
+			if (result.type === 'success') {
+				toast('success', 'Páginas legales generadas correctamente.');
+			} else if (result.type === 'failure') {
+				toast('error', (result.data as Record<string, string>)?.error ?? 'Error al generar páginas legales.');
+			}
+		};
+	}}
+></form>
+
+<ConfirmDialog
+	bind:open={confirmLegal}
+	title="Generar páginas legales"
+	message="Se crearán o sobreescribirán las páginas /aviso-legal, /politica-de-privacidad y /politica-de-cookies usando los datos de la sección Legal. ¿Continuar?"
+	confirmLabel="Generar"
+	onConfirm={doGenerateLegal}
 />
 
 <!-- ─── Página ───────────────────────────────────────────────────────────── -->
@@ -901,6 +931,25 @@
 						{#if !legalLinks.length}
 							<p class="text-xs text-gray-400">Sin enlaces legales configurados.</p>
 						{/if}
+					</div>
+
+					<hr class="border-gray-100" />
+
+					<!-- Generar páginas legales -->
+					<div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+						<p class="text-sm font-medium text-gray-700 mb-1">Páginas legales</p>
+						<p class="text-xs text-gray-500 mb-3">
+							Crea o sobreescribe las tres páginas legales del sitio usando los datos configurados arriba.
+							Si los campos están vacíos se incluirán marcadores de posición visibles.
+						</p>
+						<button
+							type="button"
+							onclick={() => { confirmLegal = true; }}
+							disabled={generatingLegal}
+							class="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-50"
+						>
+							{generatingLegal ? 'Generando…' : 'Generar páginas legales'}
+						</button>
 					</div>
 				</div>
 

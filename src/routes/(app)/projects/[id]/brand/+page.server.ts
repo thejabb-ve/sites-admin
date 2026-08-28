@@ -2,6 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod/v4';
 import type { PageServerLoad, Actions } from './$types';
 import { logAudit } from '$lib/audit';
+import { LEGAL_PAGES, type LegalInfo } from '$lib/legalTemplates';
 
 // ─── Tipos locales ────────────────────────────────────────────────────────────
 
@@ -285,5 +286,77 @@ export const actions: Actions = {
 		});
 
 		return { success: 'published' as const };
+	},
+
+	generateLegalPages: async ({ locals, params }) => {
+		const { data: manual } = await locals.supabase
+			.from('brand_manuals')
+			.select('legal_info')
+			.eq('project_id', params.id)
+			.single();
+
+		const { data: domains } = await locals.supabase
+			.from('domains')
+			.select('domain, is_active')
+			.eq('project_id', params.id)
+			.order('is_active', { ascending: false })
+			.limit(1);
+
+		const li = (manual?.legal_info ?? {}) as Record<string, string>;
+		const activeDomain = domains?.[0]?.domain;
+
+		const info: LegalInfo = {
+			company: li['legal_name']    || '[nombre de la empresa]',
+			address: li['address']       || '[dirección]',
+			email:   li['email']         || '[email]',
+			web:     activeDomain ? `https://${activeDomain}` : (li['web'] || '[sitio web]'),
+			tax_id:  li['tax_id']        || '[RIF/NIT/CIF]',
+			motive:  li['business_type'] || li['legal_name'] || '[actividad social]',
+		};
+
+		for (const lp of LEGAL_PAGES) {
+			const { data: page, error: pageError } = await locals.supabase
+				.from('pages')
+				.upsert(
+					{
+						project_id:  params.id,
+						slug:        lp.slug,
+						full_path:   lp.full_path,
+						title:       lp.title,
+						status:      'published',
+						robots:      'noindex, nofollow',
+					},
+					{ onConflict: 'project_id,full_path' },
+				)
+				.select('id')
+				.single();
+
+			if (pageError || !page) return fail(500, { error: `Error al crear página ${lp.slug}.` });
+
+			await locals.supabase.from('blocks').delete().eq('page_id', page.id);
+
+			const { error: blockError } = await locals.supabase.from('blocks').insert({
+				page_id: page.id,
+				type:    'richText',
+				order:   1,
+				props:   { content: lp.content(info) } as never,
+				version: 1,
+			});
+
+			if (blockError) return fail(500, { error: `Error al crear bloque de ${lp.slug}.` });
+		}
+
+		const { user } = await locals.safeGetSession();
+		await logAudit({
+			supabase:     locals.supabase,
+			projectId:    params.id,
+			userId:       user?.id ?? null,
+			actor:        user?.email ?? 'desconocido',
+			action:       'create',
+			resourceType: 'page',
+			resourceName: 'Páginas legales (aviso, privacidad, cookies)',
+		});
+
+		return { success: 'legalPages' as const };
 	},
 };
