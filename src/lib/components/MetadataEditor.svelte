@@ -49,7 +49,7 @@
 	const descPct    = $derived(barPct(descLen,  DESC_BAR));
 
 	const colorMap = {
-		red:   { fill: '#ef4444', text: 'text-red-500'   },
+		red:   { fill: '#ef4444', text: 'text-danger'    },
 		amber: { fill: '#f59e0b', text: 'text-amber-500' },
 		green: { fill: '#16a34a', text: 'text-green-600' },
 	} as const;
@@ -63,7 +63,7 @@
 <div class="space-y-6">
 	<!-- SEO title -->
 	<div>
-		<label class="block text-sm font-medium text-gray-700 mb-1" for="seo_title">
+		<label class="block text-sm font-medium text-body mb-1" for="seo_title">
 			Título SEO
 		</label>
 		<input
@@ -72,10 +72,10 @@
 			type="text"
 			bind:value={seoTitle}
 			placeholder="Título que aparece en Google (recomendado: 50–70 caracteres)"
-			class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+			class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 		/>
 		<div class="mt-1.5 flex items-center gap-2">
-			<div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+			<div class="flex-1 h-1 bg-surface-muted-strong rounded-full overflow-hidden">
 				<div
 					class="h-full rounded-full transition-all duration-200"
 					style="width:{titlePct}%; background-color:{colorMap[titleColor].fill}"
@@ -89,7 +89,7 @@
 
 	<!-- SEO description -->
 	<div>
-		<label class="block text-sm font-medium text-gray-700 mb-1" for="seo_description">
+		<label class="block text-sm font-medium text-body mb-1" for="seo_description">
 			Descripción SEO
 		</label>
 		<textarea
@@ -98,10 +98,10 @@
 			rows="3"
 			bind:value={seoDescription}
 			placeholder="Descripción que aparece en Google (recomendado: 120–160 caracteres)"
-			class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+			class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
 		></textarea>
 		<div class="mt-1.5 flex items-center gap-2">
-			<div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+			<div class="flex-1 h-1 bg-surface-muted-strong rounded-full overflow-hidden">
 				<div
 					class="h-full rounded-full transition-all duration-200"
 					style="width:{descPct}%; background-color:{colorMap[descColor].fill}"
@@ -115,14 +115,14 @@
 
 	<!-- Robots -->
 	<div>
-		<label class="block text-sm font-medium text-gray-700 mb-1" for="robots">
+		<label class="block text-sm font-medium text-body mb-1" for="robots">
 			Indexación en buscadores
 		</label>
 		<select
 			id="robots"
 			name="robots"
 			bind:value={robots}
-			class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+			class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 		>
 			<option value="index, follow">Indexar (recomendado)</option>
 			<option value="noindex, follow">No indexar esta página</option>
@@ -132,12 +132,12 @@
 	</div>
 
 	<!-- Open Graph -->
-	<fieldset class="border border-gray-200 rounded-lg p-4">
-		<legend class="text-sm font-medium text-gray-700 px-1">Open Graph (redes sociales)</legend>
+	<fieldset class="border border-border-subtle rounded-lg p-4">
+		<legend class="text-sm font-medium text-body px-1">Open Graph (redes sociales)</legend>
 		<div class="space-y-4 mt-2">
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="og_title">
-					Título OG <span class="text-gray-400">(si está vacío usa el título SEO)</span>
+				<label class="block text-xs text-muted mb-1" for="og_title">
+					Título OG <span class="text-faint">(si está vacío usa el título SEO)</span>
 				</label>
 				<input
 					id="og_title"
@@ -145,12 +145,12 @@
 					type="text"
 					bind:value={ogTitle}
 					placeholder={seoTitle || 'Título para compartir en redes'}
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="og_description">
-					Descripción OG <span class="text-gray-400">(si está vacío usa la descripción SEO)</span>
+				<label class="block text-xs text-muted mb-1" for="og_description">
+					Descripción OG <span class="text-faint">(si está vacío usa la descripción SEO)</span>
 				</label>
 				<textarea
 					id="og_description"
@@ -158,12 +158,12 @@
 					rows="2"
 					bind:value={ogDescription}
 					placeholder={seoDescription || 'Descripción para compartir en redes'}
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
 				></textarea>
 			</div>
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="og_image_url">
-					Imagen OG <span class="text-gray-400">(URL de imagen 1200×630 px)</span>
+				<label class="block text-xs text-muted mb-1" for="og_image_url">
+					Imagen OG <span class="text-faint">(URL de imagen 1200×630 px)</span>
 				</label>
 				<input
 					id="og_image_url"
@@ -171,7 +171,7 @@
 					type="url"
 					bind:value={ogImageUrl}
 					placeholder="https://cdn.ejemplo.com/imagen-og.jpg"
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
 		</div>
@@ -183,9 +183,9 @@
 			<input
 				type="checkbox"
 				bind:checked={showCanonical}
-				class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+				class="rounded border-border text-primary focus:ring-blue-500"
 			/>
-			<span class="text-sm font-medium text-gray-700">URL canónica personalizada</span>
+			<span class="text-sm font-medium text-body">URL canónica personalizada</span>
 		</label>
 		{#if showCanonical}
 			<input
@@ -193,7 +193,7 @@
 				type="url"
 				bind:value={canonicalUrl}
 				placeholder="https://ejemplo.com/pagina-original"
-				class="mt-2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="mt-2 w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 			/>
 		{:else}
 			<input type="hidden" name="canonical_url" value="" />
@@ -202,13 +202,13 @@
 
 	<!-- Preview de tarjeta de búsqueda -->
 	<div>
-		<p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+		<p class="text-xs font-medium text-subtle uppercase tracking-wide mb-2">
 			Previsualización en Google
 		</p>
-		<div class="border border-gray-200 rounded-lg p-4 bg-white max-w-xl">
-			<p class="text-blue-700 text-base font-medium truncate">{previewTitle}</p>
-			<p class="text-green-700 text-xs mt-0.5">ejemplo.com › esta-pagina</p>
-			<p class="text-gray-600 text-sm mt-1 line-clamp-2">{previewDesc}</p>
+		<div class="border border-border-subtle rounded-lg p-4 bg-white max-w-xl">
+			<p class="text-primary-hover text-base font-medium truncate">{previewTitle}</p>
+			<p class="text-success text-xs mt-0.5">ejemplo.com › esta-pagina</p>
+			<p class="text-muted text-sm mt-1 line-clamp-2">{previewDesc}</p>
 		</div>
 	</div>
 </div>

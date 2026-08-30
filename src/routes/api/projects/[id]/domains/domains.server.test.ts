@@ -2,16 +2,6 @@ import { describe, it, expect, mock, beforeEach } from 'bun:test';
 
 // ── Mocks (antes del import dinámico) ─────────────────────────────────────────
 
-mock.module('$env/static/private', () => ({
-	CLOUDFLARE_API_TOKEN:  'test-cf-token',
-	CLOUDFLARE_ACCOUNT_ID: 'test-account-id',
-	VERCEL_API_TOKEN:      'test-vercel-token',
-	VERCEL_PROJECT_ID:     'test-project-id',
-	RESEND_API_KEY:        'test-resend-key',
-	RESEND_FROM_EMAIL:     'noreply@test.com',
-	ALERT_EMAIL:           'alertas@test.com',
-}));
-
 // Se usan $lib/ para que no colisionen con los mocks de paths relativos en lib/*.test.ts
 const mockCheckAvailability = mock(async () => ({ available: true }));
 mock.module('$lib/cloudflare-registrar.server', () => ({

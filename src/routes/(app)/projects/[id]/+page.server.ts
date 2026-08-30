@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { requireProject } from '$lib/server/project';
 import type { PageServerLoad } from './$types';
 
 const PAGE_SIZE = 25;
@@ -17,15 +17,26 @@ const RESOURCE_TYPE_FILTERS = Object.entries(RESOURCE_TYPE_LABELS).map(([value, 
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
 	// RLS garantiza que si el proyecto no es del usuario, devuelve null
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name, created_at')
-		.eq('id', params.id)
-		.single();
+	const project = await requireProject(locals.supabase, params.id, 'id, name, created_at', 'Proyecto no encontrado o sin acceso.');
 
-	if (!project) error(404, 'Proyecto no encontrado o sin acceso.');
+	// ── Audit log (query armada antes del Promise.all para poder correrla en paralelo) ──
 
-	const [{ data: domains }, { data: rawMembers }] = await Promise.all([
+	const logPage = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
+	const logType = url.searchParams.get('type') ?? 'all';
+	const offset  = (logPage - 1) * PAGE_SIZE;
+
+	let auditQuery = locals.supabase
+		.from('audit_log')
+		.select('id, actor, action, resource_type, resource_id, resource_name, changed, status, error_message, created_at', { count: 'exact' })
+		.eq('project_id', params.id)
+		.order('created_at', { ascending: false })
+		.range(offset, offset + PAGE_SIZE - 1);
+
+	if (logType !== 'all') {
+		auditQuery = auditQuery.eq('resource_type', logType);
+	}
+
+	const [{ data: domains }, { data: rawMembers }, { data: logs, count: logTotal }] = await Promise.all([
 		locals.supabase
 			.from('domains')
 			.select('id, domain, is_active')
@@ -35,7 +46,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 			.from('project_members')
 			.select('user_id, role_id, created_at, project_roles(name)')
 			.eq('project_id', params.id)
-			.order('created_at')
+			.order('created_at'),
+		auditQuery,
 	]);
 
 	// user_profiles no tiene FK directa desde project_members, se resuelve aparte.
@@ -56,25 +68,6 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		role_name: (m.project_roles as { name: string } | null)?.name ?? '—',
 		created_at: m.created_at
 	}));
-
-	// ── Audit log ─────────────────────────────────────────────────────────────
-
-	const logPage = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
-	const logType = url.searchParams.get('type') ?? 'all';
-	const offset  = (logPage - 1) * PAGE_SIZE;
-
-	let auditQuery = locals.supabase
-		.from('audit_log')
-		.select('id, actor, action, resource_type, resource_id, resource_name, changed, status, error_message, created_at', { count: 'exact' })
-		.eq('project_id', params.id)
-		.order('created_at', { ascending: false })
-		.range(offset, offset + PAGE_SIZE - 1);
-
-	if (logType !== 'all') {
-		auditQuery = auditQuery.eq('resource_type', logType);
-	}
-
-	const { data: logs, count: logTotal } = await auditQuery;
 
 	const logTotalPages = Math.ceil((logTotal ?? 0) / PAGE_SIZE);
 

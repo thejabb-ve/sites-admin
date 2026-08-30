@@ -1,7 +1,8 @@
 import { z } from 'zod/v4';
+import { OptionalHeadingSchema, LinkSchema } from '../shared/schemas';
 
 export const FaqPropsSchema = z.object({
-  heading: z.string().optional(),
+  heading: OptionalHeadingSchema,
   items:   z.array(z.object({
     question: z.string(),
     answer:   z.string(),
@@ -9,7 +10,7 @@ export const FaqPropsSchema = z.object({
 });
 
 export const PricingPropsSchema = z.object({
-  heading: z.string().optional(),
+  heading: OptionalHeadingSchema,
   plans:   z.array(z.object({
     name:        z.string(),
     price:       z.string(),
@@ -22,27 +23,22 @@ export const PricingPropsSchema = z.object({
   })).min(1),
 });
 
-const CountdownPhaseSchema = z.object({
+const CountdownPhaseConfigSchema = z.object({
   title:       z.string(),
   description: z.string(),
-  cta:         z.object({ label: z.string(), href: z.string() }),
+  cta:         LinkSchema,
 });
 
 export const CountdownPropsSchema = z.object({
   targetDate: z.string().nullable().default(null),
   duration:   z.number().int().min(1).default(3),
-  heading:    z.string().optional(),
+  heading:    OptionalHeadingSchema,
   imageUrl:   z.string().optional(),
   imageAlt:   z.string().optional(),
   phases: z.object({
-    pending:  CountdownPhaseSchema,
-    upcoming: CountdownPhaseSchema,
-    live:     CountdownPhaseSchema,
-    finished: CountdownPhaseSchema,
+    pending:  CountdownPhaseConfigSchema,
+    upcoming: CountdownPhaseConfigSchema,
+    live:     CountdownPhaseConfigSchema,
+    finished: CountdownPhaseConfigSchema,
   }),
 });
-
-export type FaqProps      = z.infer<typeof FaqPropsSchema>;
-export type PricingProps   = z.infer<typeof PricingPropsSchema>;
-export type CountdownProps = z.infer<typeof CountdownPropsSchema>;
-export type CountdownPhase = z.infer<typeof CountdownPhaseSchema>;

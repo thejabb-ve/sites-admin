@@ -4,6 +4,7 @@
 	import { slugify } from '$lib/metadata';
 	import { toast } from '$lib/toast.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import type { PageData } from './$types';
 	import type { ActionResult } from '@sveltejs/kit';
 
@@ -75,42 +76,42 @@
 <svelte:head><title>{data.collection.name} — {data.project.name}</title></svelte:head>
 
 <div class="space-y-6">
-	<div class="flex items-center gap-2 text-sm text-gray-500">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}" class="hover:text-gray-900">{data.project.name}</a>
+		<a href="/projects/{data.project.id}" class="hover:text-ink">{data.project.name}</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}/collections" class="hover:text-gray-900">Colecciones</a>
+		<a href="/projects/{data.project.id}/collections" class="hover:text-ink">Colecciones</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">{data.collection.name}</span>
+		<span class="text-ink font-medium">{data.collection.name}</span>
 	</div>
 
 	<div class="flex items-center justify-between">
-		<h1 class="text-xl font-semibold text-gray-900">{data.collection.name}</h1>
+		<h1 class="text-xl font-semibold text-ink">{data.collection.name}</h1>
 	</div>
 
 	{#if data.items.length === 0}
-		<div class="bg-white border border-gray-200 rounded-lg p-10 text-center">
-			<p class="text-gray-500 text-sm">No hay ítems en esta colección.</p>
+		<div class="bg-white border border-border-subtle rounded-lg p-10 text-center">
+			<p class="text-subtle text-sm">No hay ítems en esta colección.</p>
 		</div>
 	{:else}
-		<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-			<div class="hidden md:grid grid-cols-[48px_1fr_200px_100px_180px] gap-3 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wide">
+		<div class="bg-white border border-border-subtle rounded-lg overflow-hidden">
+			<div class="hidden md:grid grid-cols-[48px_1fr_200px_100px_180px] gap-3 px-4 py-2 bg-surface-muted border-b border-border-faint text-xs font-medium text-subtle uppercase tracking-wide">
 				<span>#</span>
 				<span>Título</span>
 				<span>URL</span>
 				<span>Estado</span>
 				<span>Acciones</span>
 			</div>
-			<div class="divide-y divide-gray-100">
+			<div class="divide-y divide-border-faint">
 				{#each data.items as item (item.id)}
 					<div class="px-4 py-3 grid md:grid-cols-[48px_1fr_200px_100px_180px] gap-2 md:gap-3 items-center">
-						<span class="text-sm text-gray-400">{item.order}</span>
-						<span class="text-sm font-medium text-gray-900">{item.title}</span>
-						<span class="text-xs font-mono text-gray-500 truncate">{item.full_path}</span>
+						<span class="text-sm text-faint">{item.order}</span>
+						<span class="text-sm font-medium text-ink">{item.title}</span>
+						<span class="text-xs font-mono text-subtle truncate">{item.full_path}</span>
 						<span
 							class="text-xs px-2 py-0.5 rounded-full inline-block
-								{item.status === 'published' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}"
+								{item.status === 'published' ? 'bg-green-50 text-success-hover' : 'bg-surface-muted-strong text-subtle'}"
 						>
 							{item.status === 'published' ? 'Publicado' : 'Borrador'}
 						</span>
@@ -121,21 +122,21 @@
 								<input type="hidden" name="new_status" value={item.status === 'published' ? 'draft' : 'published'} />
 								<button
 									type="submit"
-									class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+									class="text-xs px-2 py-1 rounded border border-border-subtle text-muted hover:border-faint hover:text-ink transition-colors"
 								>
 									{item.status === 'published' ? 'Despublicar' : 'Publicar'}
 								</button>
 							</form>
 							<a
 								href="/projects/{data.project.id}/collections/{data.collection.id}/{item.id}"
-								class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+								class="text-xs px-2 py-1 rounded border border-border-subtle text-muted hover:border-faint hover:text-ink transition-colors"
 							>
 								Editar
 							</a>
 							<button
 								type="button"
 								onclick={() => askDelete(item)}
-								class="text-xs px-2 py-1 rounded border border-gray-200 text-red-500 hover:border-red-300 hover:text-red-700 transition-colors"
+								class="text-xs px-2 py-1 rounded border border-border-subtle text-danger hover:border-red-300 hover:text-danger-hover transition-colors"
 							>
 								Eliminar
 							</button>
@@ -146,8 +147,8 @@
 		</div>
 	{/if}
 
-	<div class="bg-white border border-gray-200 rounded-lg p-5">
-		<h2 class="text-sm font-semibold text-gray-700 mb-4">Nuevo ítem</h2>
+	<div class="bg-white border border-border-subtle rounded-lg p-5">
+		<h2 class="text-sm font-semibold text-body mb-4">Nuevo ítem</h2>
 		<form
 			method="POST"
 			action="?/create"
@@ -165,7 +166,7 @@
 			class="flex items-end gap-3 flex-wrap"
 		>
 			<div class="flex-1 min-w-48">
-				<label class="block text-xs text-gray-600 mb-1" for="new-title">Título</label>
+				<label class="block text-xs text-muted mb-1" for="new-title">Título</label>
 				<input
 					id="new-title"
 					name="title"
@@ -174,11 +175,11 @@
 					oninput={handleTitleInput}
 					required
 					placeholder="Nombre del ítem"
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
 			<div class="flex-1 min-w-36">
-				<label class="block text-xs text-gray-600 mb-1" for="new-slug">Slug</label>
+				<label class="block text-xs text-muted mb-1" for="new-slug">Slug</label>
 				<input
 					id="new-slug"
 					name="slug"
@@ -188,15 +189,10 @@
 					required
 					placeholder="nombre-del-item"
 					pattern="[-a-z0-9]+"
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
-			<button
-				type="submit"
-				class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-			>
-				Crear
-			</button>
+			<Button type="submit">Crear</Button>
 		</form>
 	</div>
 </div>

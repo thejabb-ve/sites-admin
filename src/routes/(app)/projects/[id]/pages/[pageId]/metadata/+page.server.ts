@@ -1,15 +1,10 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { isValidRobots } from '$lib/metadata';
+import { requireProject } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name')
-		.eq('id', params.id)
-		.single();
-
-	if (!project) error(404, 'Proyecto no encontrado.');
+	const project = await requireProject(locals.supabase, params.id, 'id, name');
 
 	const { data: page } = await locals.supabase
 		.from('pages')

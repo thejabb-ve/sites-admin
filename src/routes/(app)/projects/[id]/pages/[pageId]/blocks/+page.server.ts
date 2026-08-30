@@ -1,31 +1,26 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { ADMIN_BLOCK_REGISTRY } from '$lib/blocks/adminRegistry';
-import { logAudit } from '$lib/audit';
+import { logProjectAudit } from '$lib/audit';
+import { requireProject } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name')
-		.eq('id', params.id)
-		.single();
-
-	if (!project) error(404, 'Proyecto no encontrado.');
-
-	const { data: page } = await locals.supabase
-		.from('pages')
-		.select('id, title, slug, full_path, status')
-		.eq('id', params.pageId)
-		.eq('project_id', params.id)
-		.single();
+	const [project, { data: page }, { data: blocks }] = await Promise.all([
+		requireProject(locals.supabase, params.id, 'id, name'),
+		locals.supabase
+			.from('pages')
+			.select('id, title, slug, full_path, status')
+			.eq('id', params.pageId)
+			.eq('project_id', params.id)
+			.single(),
+		locals.supabase
+			.from('blocks')
+			.select('id, type, order, props, version, parent_block_id')
+			.eq('page_id', params.pageId)
+			.order('order', { ascending: true }),
+	]);
 
 	if (!page) error(404, 'Página no encontrada.');
-
-	const { data: blocks } = await locals.supabase
-		.from('blocks')
-		.select('id, type, order, props, version, parent_block_id')
-		.eq('page_id', params.pageId)
-		.order('order', { ascending: true });
 
 	return { project, page, blocks: blocks ?? [] };
 };
@@ -63,12 +58,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al crear el bloque.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'create',
 			resourceType: 'block',
 			resourceId: newBlock?.id,
@@ -122,12 +112,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al guardar el bloque.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'update',
 			resourceType: 'block',
 			resourceId: blockId,
@@ -159,12 +144,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al eliminar el bloque.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'delete',
 			resourceType: 'block',
 			resourceId: blockId,
@@ -211,12 +191,7 @@ export const actions: Actions = {
 			return fail(500, { error: 'Error al reordenar los bloques.' });
 		}
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'update',
 			resourceType: 'block',
 			resourceName: `${orderedIds.length} bloques`,

@@ -19,113 +19,113 @@ import { CtaPropsSchema }                                          from './schem
 export type BlockScope = 'page' | 'site' | 'embedded';
 
 export interface AdminBlockEntry {
-  label:           string;
-  defaultProps:    Record<string, unknown>;
-  schema:          ZodType;
-  scope?:          BlockScope;
-  /** Sobreescribe el tipo de input para campos de nivel raíz */
-  fieldOverrides?:     Record<string, { inputType: FieldInputType }>;
-  /** Sobreescribe el tipo de input para sub-campos de un array-objects (clave: nombre del array → nombre del sub-campo) */
-  itemFieldOverrides?: Record<string, Record<string, { inputType: FieldInputType }>>;
-  /** Etiquetas legibles para campos específicos (reemplaza la key en la UI) */
-  fieldLabels?:    Record<string, string>;
+	label:           string;
+	defaultProps:    Record<string, unknown>;
+	schema:          ZodType;
+	scope?:          BlockScope;
+	/** Sobreescribe el tipo de input para campos de nivel raíz */
+	fieldOverrides?:     Record<string, { inputType: FieldInputType }>;
+	/** Sobreescribe el tipo de input para sub-campos de un array-objects (clave: nombre del array → nombre del sub-campo) */
+	itemFieldOverrides?: Record<string, Record<string, { inputType: FieldInputType }>>;
+	/** Etiquetas legibles para campos específicos (reemplaza la key en la UI) */
+	fieldLabels?:    Record<string, string>;
 }
 
 export const ADMIN_BLOCK_REGISTRY: Record<string, AdminBlockEntry> = {
-  'hero': {
-    label: 'Hero centrado',
-    defaultProps: { heading: 'Título principal', subheading: '', ctaLabel: '', ctaHref: '' },
-    schema: HeroCenteredPropsSchema,
-    fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
-  },
-  'hero-split': {
-    label: 'Hero (imagen lateral)',
-    defaultProps: { heading: 'Título principal', imageUrl: '', imageAlt: '', reversed: false },
-    schema: HeroSplitPropsSchema,
-    fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
-  },
-  'header': {
-    label: 'Encabezado (navegación)',
-    scope: 'site',
-    defaultProps: { links: [], ctaLabel: '', ctaHref: '' },
-    schema: HeaderPropsSchema,
-    fieldOverrides: {
-      logo:     { inputType: 'asset-picker' },
-      logoDark: { inputType: 'asset-picker' },
-    },
-    fieldLabels: {
-      logo:     'Logo (modo claro)',
-      logoDark: 'Logo (modo oscuro)',
-    },
-  },
-  'footer': {
-    label: 'Pie de página',
-    scope: 'site',
-    defaultProps: { columns: [], legal: '' },
-    schema: FooterPropsSchema,
-  },
-  'richText': {
-    label: 'Texto enriquecido',
-    defaultProps: { content: '## Título\n\nEscribe aquí tu contenido en **Markdown**.' },
-    schema: RichTextPropsSchema,
-    fieldOverrides: { content: { inputType: 'textarea' } },
-  },
-  'gallery': {
-    label: 'Galería de imágenes',
-    defaultProps: { images: [{ src: '', alt: '' }], columns: 3 },
-    schema: GalleryPropsSchema,
-    itemFieldOverrides: { images: { src: { inputType: 'asset-picker' } } },
-  },
-  'featureGrid': {
-    label: 'Grid de características',
-    defaultProps: { features: [{ title: '', description: '' }], columns: 3 },
-    schema: FeatureGridPropsSchema,
-  },
-  'faq': {
-    label: 'Preguntas frecuentes',
-    defaultProps: { items: [{ question: '', answer: '' }] },
-    schema: FaqPropsSchema,
-  },
-  'pricing': {
-    label: 'Planes de precios',
-    defaultProps: {
-      plans: [{ name: '', price: '', features: [], ctaLabel: 'Comenzar', ctaHref: '', highlighted: false }],
-    },
-    schema: PricingPropsSchema,
-  },
-  'countdown': {
-    label: 'Hero — Cuenta regresiva',
-    fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
-    fieldLabels: { duration: 'Días de aviso previo al evento' },
-    defaultProps: {
-      targetDate: null,
-      duration:   3,
-      phases: {
-        pending:  { title: 'Próximamente', description: 'Prepárate para lo que viene.', cta: { label: '', href: '' } },
-        upcoming: { title: 'Ya casi',      description: '¡Faltan pocos días!',         cta: { label: 'Ver detalles', href: '#' } },
-        live:     { title: '¡Ya está aquí!', description: 'No te lo pierdas.',         cta: { label: 'Participar', href: '#' } },
-        finished: { title: 'Terminó',      description: 'Gracias por participar.',     cta: { label: '', href: '' } },
-      },
-    },
-    schema: CountdownPropsSchema,
-  },
-  'form': {
-    label: 'Formulario de contacto',
-    defaultProps: {
-      fields:            [{ name: 'nombre', type: 'text', label: 'Nombre', required: true }],
-      submitLabel:       'Enviar',
-      action:            'contacto',
-      errorMessage:      'Error al enviar el formulario.',
-      networkError:      'No se pudo conectar con el servidor.',
-      successMessage:    '¡Mensaje enviado con éxito! Te responderemos pronto.',
-      selectPlaceholder: 'Seleccionar...',
-      submittingLabel:   'Enviando…',
-    },
-    schema: FormPropsSchema,
-  },
-  'cta': {
-    label: 'Llamada a la acción (CTA)',
-    defaultProps: { label: 'Comenzar ahora', href: '/', variant: 'primary' },
-    schema: CtaPropsSchema,
-  },
+	'hero': {
+		label: 'Hero centrado',
+		defaultProps: { heading: 'Título principal', subheading: '', ctaLabel: '', ctaHref: '' },
+		schema: HeroCenteredPropsSchema,
+		fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
+	},
+	'hero-split': {
+		label: 'Hero (imagen lateral)',
+		defaultProps: { heading: 'Título principal', imageUrl: '', imageAlt: '', reversed: false },
+		schema: HeroSplitPropsSchema,
+		fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
+	},
+	'header': {
+		label: 'Encabezado (navegación)',
+		scope: 'site',
+		defaultProps: { links: [], ctaLabel: '', ctaHref: '' },
+		schema: HeaderPropsSchema,
+		fieldOverrides: {
+			logo:     { inputType: 'asset-picker' },
+			logoDark: { inputType: 'asset-picker' },
+		},
+		fieldLabels: {
+			logo:     'Logo (modo claro)',
+			logoDark: 'Logo (modo oscuro)',
+		},
+	},
+	'footer': {
+		label: 'Pie de página',
+		scope: 'site',
+		defaultProps: { columns: [], legal: '' },
+		schema: FooterPropsSchema,
+	},
+	'richText': {
+		label: 'Texto enriquecido',
+		defaultProps: { content: '## Título\n\nEscribe aquí tu contenido en **Markdown**.' },
+		schema: RichTextPropsSchema,
+		fieldOverrides: { content: { inputType: 'textarea' } },
+	},
+	'gallery': {
+		label: 'Galería de imágenes',
+		defaultProps: { images: [{ src: '', alt: '' }], columns: 3 },
+		schema: GalleryPropsSchema,
+		itemFieldOverrides: { images: { src: { inputType: 'asset-picker' } } },
+	},
+	'featureGrid': {
+		label: 'Grid de características',
+		defaultProps: { features: [{ title: '', description: '' }], columns: 3 },
+		schema: FeatureGridPropsSchema,
+	},
+	'faq': {
+		label: 'Preguntas frecuentes',
+		defaultProps: { items: [{ question: '', answer: '' }] },
+		schema: FaqPropsSchema,
+	},
+	'pricing': {
+		label: 'Planes de precios',
+		defaultProps: {
+			plans: [{ name: '', price: '', features: [], ctaLabel: 'Comenzar', ctaHref: '', highlighted: false }],
+		},
+		schema: PricingPropsSchema,
+	},
+	'countdown': {
+		label: 'Hero — Cuenta regresiva',
+		fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
+		fieldLabels: { duration: 'Días de aviso previo al evento' },
+		defaultProps: {
+			targetDate: null,
+			duration:   3,
+			phases: {
+				pending:  { title: 'Próximamente', description: 'Prepárate para lo que viene.', cta: { label: '', href: '' } },
+				upcoming: { title: 'Ya casi',      description: '¡Faltan pocos días!',         cta: { label: 'Ver detalles', href: '#' } },
+				live:     { title: '¡Ya está aquí!', description: 'No te lo pierdas.',         cta: { label: 'Participar', href: '#' } },
+				finished: { title: 'Terminó',      description: 'Gracias por participar.',     cta: { label: '', href: '' } },
+			},
+		},
+		schema: CountdownPropsSchema,
+	},
+	'form': {
+		label: 'Formulario de contacto',
+		defaultProps: {
+			fields:            [{ name: 'nombre', type: 'text', label: 'Nombre', required: true }],
+			submitLabel:       'Enviar',
+			action:            'contacto',
+			errorMessage:      'Error al enviar el formulario.',
+			networkError:      'No se pudo conectar con el servidor.',
+			successMessage:    '¡Mensaje enviado con éxito! Te responderemos pronto.',
+			selectPlaceholder: 'Seleccionar...',
+			submittingLabel:   'Enviando…',
+		},
+		schema: FormPropsSchema,
+	},
+	'cta': {
+		label: 'Llamada a la acción (CTA)',
+		defaultProps: { label: 'Comenzar ahora', href: '/', variant: 'primary' },
+		schema: CtaPropsSchema,
+	},
 };

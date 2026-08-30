@@ -18,6 +18,3 @@ export const HeroSplitPropsSchema = HeroBaseSchema.extend({
   text:     z.string().optional(),
   reversed: z.boolean().default(false),
 });
-
-export type HeroCenteredProps = z.infer<typeof HeroCenteredPropsSchema>;
-export type HeroSplitProps    = z.infer<typeof HeroSplitPropsSchema>;

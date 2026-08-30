@@ -7,14 +7,32 @@ export interface LegalInfo {
 	motive:   string;
 }
 
+function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+// Los campos de texto libre se interpolan dentro de plantillas Markdown (ej. `[{{company}}]({{web}})`).
+// Sin esto, un valor como `x](javascript:alert(1))(` rompe la sintaxis del link e inyecta uno nuevo.
+// `web` queda fuera: ocupa la posición de URL, no de texto, y su defensa es el filtro de esquemas
+// de `renderSafeMarkdown` aguas abajo (ver CLAUDE.md).
+function escapeMarkdown(value: string): string {
+	return value.replace(/[\\`*_[\]()]/g, '\\$&');
+}
+
 function fill(template: string, info: LegalInfo): string {
+	const text = (value: string) => escapeHtml(escapeMarkdown(value));
 	return template
-		.replace(/\{\{company\}\}/g,  info.company)
-		.replace(/\{\{address\}\}/g,  info.address)
-		.replace(/\{\{email\}\}/g,    info.email)
-		.replace(/\{\{web\}\}/g,      info.web)
-		.replace(/\{\{tax_id\}\}/g,   info.tax_id)
-		.replace(/\{\{motive\}\}/g,   info.motive);
+		.replace(/\{\{company\}\}/g,  text(info.company))
+		.replace(/\{\{address\}\}/g,  text(info.address))
+		.replace(/\{\{email\}\}/g,    text(info.email))
+		.replace(/\{\{web\}\}/g,      escapeHtml(info.web))
+		.replace(/\{\{tax_id\}\}/g,   text(info.tax_id))
+		.replace(/\{\{motive\}\}/g,   text(info.motive));
 }
 
 const AVISO_LEGAL_TEMPLATE = `## 1. Aviso Legal y Términos de Uso

@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import sharp from 'sharp';
 import { waitUntil } from '@vercel/functions';
@@ -23,29 +24,53 @@ function isAllowedType(type: string): boolean {
 		|| type === 'application/pdf';
 }
 
+// El `type` de un File en FormData es el Content-Type declarado por el cliente —
+// no está verificado contra el contenido real. Sin esto, cualquier payload (HTML/JS)
+// etiquetado con un tipo de la allowlist pasa isAllowedType() y se sube al CDN público.
+function bufferMatchesDeclaredType(buf: Buffer, declaredType: string): boolean {
+	const isJpeg      = buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+	const isPng       = buf.length >= 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+	const isWebp      = buf.length >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+	const isPdf       = buf.length >= 5 && buf.toString('ascii', 0, 5) === '%PDF-';
+	const isMp4Family = buf.length >= 12 && buf.toString('ascii', 4, 8) === 'ftyp';
+	const isWebm      = buf.length >= 4 && buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3;
+
+	if (declaredType === 'image/jpeg' || declaredType === 'image/jpg') return isJpeg;
+	if (declaredType === 'image/png') return isPng;
+	if (declaredType === 'image/webp') return isWebp;
+	if (declaredType === 'application/pdf') return isPdf;
+	if (declaredType.startsWith('video/')) return isMp4Family || isWebm;
+	return false;
+}
+
 export const POST: RequestHandler = async ({ request, params, locals }) => {
 	const { user } = await locals.safeGetSession();
-	if (!user) return json({ error: 'No autenticado' }, 401);
+	if (!user) return json({ error: 'No autenticado' }, { status: 401 });
 
 	const { data: project } = await locals.supabase
 		.from('projects')
 		.select('id')
 		.eq('id', params.id)
 		.single();
-	if (!project) return json({ error: 'Proyecto no encontrado' }, 404);
+	if (!project) return json({ error: 'Proyecto no encontrado' }, { status: 404 });
 
 	const formData = await request.formData().catch(() => null);
 	const file = formData?.get('file') as File | null;
-	if (!file) return json({ error: 'Campo "file" requerido' }, 400);
+	if (!file) return json({ error: 'Campo "file" requerido' }, { status: 400 });
 
 	if (!isAllowedType(file.type)) {
-		return json({ error: 'Tipo de archivo no admitido. Se aceptan imágenes JPG/PNG/WebP, videos y PDF' }, 400);
+		return json({ error: 'Tipo de archivo no admitido. Se aceptan imágenes JPG/PNG/WebP, videos y PDF' }, { status: 400 });
 	}
 	if (file.size > 200 * 1024 * 1024) {
-		return json({ error: 'Tamaño máximo: 200 MB' }, 400);
+		return json({ error: 'Tamaño máximo: 200 MB' }, { status: 400 });
 	}
 
 	const originalArrayBuffer = await file.arrayBuffer();
+
+	if (!bufferMatchesDeclaredType(Buffer.from(originalArrayBuffer), file.type)) {
+		return json({ error: 'El contenido del archivo no coincide con el tipo declarado' }, { status: 400 });
+	}
+
 	const baseName = file.name.replace(/\.[^.]+$/, '');
 
 	// ── Fase 1: subir original al CDN ────────────────────────────────────────
@@ -64,7 +89,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 
 	if (!cdnRes.ok) {
 		console.error('[assets/upload] CDN error (original):', await cdnRes.text());
-		return json({ error: 'Error subiendo al CDN' }, 502);
+		return json({ error: 'Error subiendo al CDN' }, { status: 502 });
 	}
 
 	let cdnData: { url: string; key: string };
@@ -72,7 +97,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		cdnData = await cdnRes.json() as { url: string; key: string };
 		if (!cdnData.url || !cdnData.key) throw new Error('CDN response missing url/key');
 	} catch {
-		return json({ error: 'Error subiendo al CDN' }, 502);
+		return json({ error: 'Error subiendo al CDN' }, { status: 502 });
 	}
 	const { url: originalUrl, key: originalKey } = cdnData;
 
@@ -95,7 +120,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 
 	if (dbErr || !inserted) {
 		console.error('[assets/upload] Supabase insert error:', dbErr?.message);
-		return json({ error: 'Error registrando asset' }, 500);
+		return json({ error: 'Error registrando asset' }, { status: 500 });
 	}
 
 	await logAudit({
@@ -176,12 +201,5 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		})());
 	}
 
-	return json({ ok: true, asset: inserted }, 201);
+	return json({ ok: true, asset: inserted }, { status: 201 });
 };
-
-function json(data: unknown, status = 200) {
-	return new Response(JSON.stringify(data), {
-		status,
-		headers: { 'Content-Type': 'application/json' },
-	});
-}

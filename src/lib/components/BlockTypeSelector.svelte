@@ -24,13 +24,13 @@
 		></button>
 
 		<div class="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-			<h2 class="text-base font-semibold text-gray-900 mb-4">Añadir bloque</h2>
+			<h2 class="text-base font-semibold text-ink mb-4">Añadir bloque</h2>
 
 			<div class="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
 				{#each entries as [type, entry] (type)}
 					<button
 						onclick={() => { onSelect(type); open = false; }}
-						class="text-left px-3 py-2.5 rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-sm text-gray-700 transition-colors"
+						class="text-left px-3 py-2.5 rounded-lg border border-border-subtle hover:border-blue-400 hover:bg-blue-50 text-sm text-body transition-colors"
 					>
 						{entry.label}
 					</button>
@@ -39,7 +39,7 @@
 
 			<button
 				onclick={() => (open = false)}
-				class="mt-4 text-xs text-gray-400 hover:text-gray-700 transition-colors"
+				class="mt-4 text-xs text-faint hover:text-body transition-colors"
 			>
 				Cancelar
 			</button>

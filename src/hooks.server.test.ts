@@ -15,11 +15,6 @@ mock.module('@supabase/ssr', () => ({
   }),
 }));
 
-mock.module('$env/static/public', () => ({
-  PUBLIC_SUPABASE_URL:      'http://localhost:54321',
-  PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
-}));
-
 const { handle } = await import('./hooks.server');
 
 const MOCK_USER    = { id: 'user-1', email: 'test@example.com' };

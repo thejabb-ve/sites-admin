@@ -7,16 +7,6 @@ mock.module('@vercel/functions', () => ({
 	waitUntil: (p: Promise<void>) => { _pendingSetup = p; },
 }));
 
-mock.module('$env/static/private', () => ({
-	CLOUDFLARE_API_TOKEN:  'test-cf-token',
-	CLOUDFLARE_ACCOUNT_ID: 'test-account-id',
-	VERCEL_API_TOKEN:      'test-vercel-token',
-	VERCEL_PROJECT_ID:     'test-project-id',
-	RESEND_API_KEY:        'test-resend-key',
-	RESEND_FROM_EMAIL:     'noreply@test.com',
-	ALERT_EMAIL:           'alertas@test.com',
-}));
-
 mock.module('resend', () => ({
 	Resend: class { emails = { send: mock(async () => ({ data: { id: '1' }, error: null })) }; },
 }));

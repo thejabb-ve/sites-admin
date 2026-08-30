@@ -4,19 +4,12 @@
 	import { toast }   from '$lib/toast.svelte';
 	import BlockList         from '$lib/components/BlockList.svelte';
 	import BlockTypeSelector from '$lib/components/BlockTypeSelector.svelte';
+	import Button            from '$lib/components/Button.svelte';
 	import type { PageData } from './$types';
 	import type { ActionResult }         from '@sveltejs/kit';
+	import type { Block } from '$lib/types';
 
 	let { data }: { data: PageData } = $props();
-
-	type Block = {
-		id:               string;
-		type:             string;
-		order:            number;
-		props:            Record<string, unknown>;
-		version:          number;
-		parent_block_id?: string | null;
-	};
 
 	let selectorOpen  = $state(false);
 	let selectedType  = $state('');
@@ -34,27 +27,27 @@
 
 <div class="space-y-6">
 	<!-- Breadcrumb -->
-	<div class="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle flex-wrap">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}" class="hover:text-gray-900">{data.project.name}</a>
+		<a href="/projects/{data.project.id}" class="hover:text-ink">{data.project.name}</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}/pages" class="hover:text-gray-900">Páginas</a>
+		<a href="/projects/{data.project.id}/pages" class="hover:text-ink">Páginas</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">{data.page.title}</span>
+		<span class="text-ink font-medium">{data.page.title}</span>
 	</div>
 
 	<!-- Sub-nav: Bloques | SEO -->
-	<div class="flex gap-1 border-b border-gray-200">
+	<div class="flex gap-1 border-b border-border-subtle">
 		<a
 			href="/projects/{data.project.id}/pages/{data.page.id}/blocks"
-			class="px-4 py-2 text-sm font-medium border-b-2 border-blue-600 text-blue-600 -mb-px"
+			class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary -mb-px"
 		>
 			Bloques
 		</a>
 		<a
 			href="/projects/{data.project.id}/pages/{data.page.id}/metadata"
-			class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+			class="px-4 py-2 text-sm font-medium text-subtle hover:text-ink transition-colors"
 		>
 			SEO
 		</a>
@@ -63,17 +56,12 @@
 	<!-- Encabezado -->
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-xl font-semibold text-gray-900">Bloques</h1>
-			<p class="text-sm text-gray-500 font-mono mt-0.5">{data.page.full_path}</p>
+			<h1 class="text-xl font-semibold text-ink">Bloques</h1>
+			<p class="text-sm text-subtle font-mono mt-0.5">{data.page.full_path}</p>
 		</div>
-		<button
-			type="button"
-			disabled={adding}
-			onclick={() => (selectorOpen = true)}
-			class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors"
-		>
-			{adding ? 'Añadiendo…' : '+ Añadir bloque'}
-		</button>
+		<Button onclick={() => (selectorOpen = true)} loading={adding} loadingLabel="Añadiendo…">
+			+ Añadir bloque
+		</Button>
 	</div>
 
 	<!-- Lista de bloques -->

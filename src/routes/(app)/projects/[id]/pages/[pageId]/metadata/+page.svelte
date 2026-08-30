@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import MetadataEditor from '$lib/components/MetadataEditor.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -20,29 +21,29 @@
 <svelte:head><title>Metadatos SEO — {data.page.title} — {data.project.name}</title></svelte:head>
 
 <div class="space-y-6">
-	<div class="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle flex-wrap">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}" class="hover:text-gray-900">{data.project.name}</a>
+		<a href="/projects/{data.project.id}" class="hover:text-ink">{data.project.name}</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}/pages" class="hover:text-gray-900">Páginas</a>
+		<a href="/projects/{data.project.id}/pages" class="hover:text-ink">Páginas</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">{data.page.title}</span>
+		<span class="text-ink font-medium">{data.page.title}</span>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">SEO</span>
+		<span class="text-ink font-medium">SEO</span>
 	</div>
 
 	<!-- Sub-nav: Bloques | SEO -->
-	<div class="flex gap-1 border-b border-gray-200">
+	<div class="flex gap-1 border-b border-border-subtle">
 		<a
 			href="/projects/{data.project.id}/pages/{data.page.id}/blocks"
-			class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+			class="px-4 py-2 text-sm font-medium text-subtle hover:text-ink transition-colors"
 		>
 			Bloques
 		</a>
 		<a
 			href="/projects/{data.project.id}/pages/{data.page.id}/metadata"
-			class="px-4 py-2 text-sm font-medium border-b-2 border-blue-600 text-blue-600 -mb-px"
+			class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary -mb-px"
 		>
 			SEO
 		</a>
@@ -50,19 +51,19 @@
 
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-xl font-semibold text-gray-900">Metadatos SEO</h1>
-			<p class="text-sm text-gray-500 font-mono mt-0.5">{data.page.full_path}</p>
+			<h1 class="text-xl font-semibold text-ink">Metadatos SEO</h1>
+			<p class="text-sm text-subtle font-mono mt-0.5">{data.page.full_path}</p>
 		</div>
 	</div>
 
 	{#if form?.error}
-		<div class="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+		<div class="bg-red-50 border border-red-200 text-danger-hover text-sm px-4 py-3 rounded-md">
 			{form.error}
 		</div>
 	{/if}
 
 	{#if form?.success}
-		<div class="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg">
+		<div class="bg-green-50 border border-green-200 text-success-hover text-sm px-4 py-3 rounded-md">
 			Metadatos guardados correctamente.
 		</div>
 	{/if}
@@ -77,7 +78,7 @@
 				saving = false;
 			};
 		}}
-		class="bg-white border border-gray-200 rounded-lg p-6 space-y-6"
+		class="bg-white border border-border-subtle rounded-lg p-6 space-y-6"
 	>
 		<MetadataEditor
 			bind:seoTitle
@@ -89,20 +90,14 @@
 			bind:canonicalUrl
 		/>
 
-		<div class="flex items-center justify-between pt-4 border-t border-gray-100">
+		<div class="flex items-center justify-between pt-4 border-t border-border-faint">
 			<a
 				href="/projects/{data.project.id}/pages"
-				class="text-sm text-gray-500 hover:text-gray-900"
+				class="text-sm text-subtle hover:text-ink"
 			>
 				&larr; Volver a páginas
 			</a>
-			<button
-				type="submit"
-				disabled={saving}
-				class="px-5 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors"
-			>
-				{saving ? 'Guardando…' : 'Guardar metadatos'}
-			</button>
+			<Button type="submit" loading={saving}>Guardar metadatos</Button>
 		</div>
 	</form>
 </div>

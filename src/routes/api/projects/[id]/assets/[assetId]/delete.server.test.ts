@@ -2,11 +2,6 @@ import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 
 // ─── Mocks de módulos ────────────────────────────────────────────────────────
 
-mock.module('$env/static/private', () => ({
-	CDN_WORKER_URL: 'https://cdn.test',
-	CDN_UPLOAD_SECRET: 'test-secret',
-}));
-
 const { DELETE } = await import('./+server');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

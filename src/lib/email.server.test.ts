@@ -8,16 +8,6 @@ mock.module('resend', () => ({
 	},
 }));
 
-mock.module('$env/static/private', () => ({
-	CLOUDFLARE_API_TOKEN:  'test-cf-token',
-	CLOUDFLARE_ACCOUNT_ID: 'test-account-id',
-	VERCEL_API_TOKEN:      'test-vercel-token',
-	VERCEL_PROJECT_ID:     'test-project-id',
-	RESEND_API_KEY:        'test-resend-key',
-	RESEND_FROM_EMAIL:     'noreply@agencia.test',
-	ALERT_EMAIL:           'alertas@agencia.test',
-}));
-
 const { sendEmail } = await import('./email.server');
 
 beforeEach(() => { mockEmailsSend.mockClear(); });

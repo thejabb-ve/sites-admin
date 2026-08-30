@@ -4,6 +4,7 @@
 	import { toast } from '$lib/toast.svelte';
 	import AssetPicker from '$lib/components/AssetPicker.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import type { PageData } from './$types';
 	import type { ActionResult } from '@sveltejs/kit';
 
@@ -59,20 +60,20 @@
 <svelte:head><title>Configuración — {siteName || data.project.name}</title></svelte:head>
 
 <div class="space-y-6">
-	<div class="flex items-center gap-2 text-sm text-gray-500">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}" class="hover:text-gray-900">{data.project.name}</a>
+		<a href="/projects/{data.project.id}" class="hover:text-ink">{data.project.name}</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">Configuración</span>
+		<span class="text-ink font-medium">Configuración</span>
 	</div>
 
-	<h1 class="text-xl font-semibold text-gray-900">Configuración del proyecto</h1>
+	<h1 class="text-xl font-semibold text-ink">Configuración del proyecto</h1>
 
 	<!-- Identidad del sitio -->
-	<div class="bg-white border border-gray-200 rounded-lg p-5">
-		<h2 class="text-sm font-semibold text-gray-700 mb-1">Identidad del sitio</h2>
-		<p class="text-xs text-gray-500 mb-4">
+	<div class="bg-white border border-border-subtle rounded-lg p-5">
+		<h2 class="text-sm font-semibold text-body mb-1">Identidad del sitio</h2>
+		<p class="text-xs text-subtle mb-4">
 			Controla cómo aparece el sitio en buscadores y resultados de búsqueda.
 		</p>
 
@@ -87,7 +88,7 @@
 		>
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div>
-					<label class="block text-xs text-gray-600 mb-1" for="site_name">
+					<label class="block text-xs text-muted mb-1" for="site_name">
 						Nombre del sitio
 					</label>
 					<input
@@ -96,18 +97,18 @@
 						type="text"
 						bind:value={siteName}
 						placeholder="SIMUN"
-						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					/>
 				</div>
 				<div>
-					<label class="block text-xs text-gray-600 mb-1" for="title_separator">
+					<label class="block text-xs text-muted mb-1" for="title_separator">
 						Separador del título
 					</label>
 					<select
 						id="title_separator"
 						name="title_separator"
 						bind:value={titleSeparator}
-						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					>
 						<option value=" | "> | </option>
 						<option value=" — "> — </option>
@@ -118,20 +119,20 @@
 			</div>
 
 			<!-- Vista previa del título -->
-			<div class="bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
-				<p class="text-xs text-gray-500 mb-0.5">Vista previa en Google</p>
-				<p class="text-sm text-blue-700 truncate">{titlePreview}</p>
+			<div class="bg-surface-muted border border-border-subtle rounded-md px-3 py-2">
+				<p class="text-xs text-subtle mb-0.5">Vista previa en Google</p>
+				<p class="text-sm text-primary-hover truncate">{titlePreview}</p>
 			</div>
 
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="default_robots">
+				<label class="block text-xs text-muted mb-1" for="default_robots">
 					Indexación por defecto (para páginas nuevas)
 				</label>
 				<select
 					id="default_robots"
 					name="default_robots"
 					bind:value={defaultRobots}
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				>
 					<option value="index, follow">Indexar (recomendado)</option>
 					<option value="noindex, follow">No indexar páginas nuevas</option>
@@ -141,9 +142,9 @@
 			</div>
 
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="canonical_domain">
+				<label class="block text-xs text-muted mb-1" for="canonical_domain">
 					Dominio canónico
-					<span class="text-gray-400">(base para URLs canónicas automáticas)</span>
+					<span class="text-faint">(base para URLs canónicas automáticas)</span>
 				</label>
 				<input
 					id="canonical_domain"
@@ -151,19 +152,19 @@
 					type="url"
 					bind:value={canonicalDomain}
 					placeholder="https://sanignaciomun.com"
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 				{#if canonicalDomain}
-					<p class="mt-1 text-xs text-gray-400">
+					<p class="mt-1 text-xs text-faint">
 						Ejemplo: <span class="font-mono">{canonicalDomain}/nosotros</span>
 					</p>
 				{/if}
 			</div>
 
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="twitter_handle">
+				<label class="block text-xs text-muted mb-1" for="twitter_handle">
 					Handle de Twitter / X
-					<span class="text-gray-400">(con o sin @)</span>
+					<span class="text-faint">(con o sin @)</span>
 				</label>
 				<input
 					id="twitter_handle"
@@ -171,26 +172,20 @@
 					type="text"
 					bind:value={twitterHandle}
 					placeholder="@simun"
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
 
 			<div class="flex justify-end">
-				<button
-					type="submit"
-					disabled={savingSite}
-					class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors"
-				>
-					{savingSite ? 'Guardando…' : 'Guardar identidad'}
-				</button>
+				<Button type="submit" loading={savingSite}>Guardar identidad</Button>
 			</div>
 		</form>
 	</div>
 
 	<!-- Activos SEO -->
-	<div class="bg-white border border-gray-200 rounded-lg p-5">
-		<h2 class="text-sm font-semibold text-gray-700 mb-1">Activos SEO</h2>
-		<p class="text-xs text-gray-500 mb-4">
+	<div class="bg-white border border-border-subtle rounded-lg p-5">
+		<h2 class="text-sm font-semibold text-body mb-1">Activos SEO</h2>
+		<p class="text-xs text-subtle mb-4">
 			Favicon y imagen Open Graph por defecto para todas las páginas del sitio.
 		</p>
 
@@ -207,7 +202,7 @@
 			<input type="hidden" name="og_image_url" value={ogImageUrl} />
 
 			<div>
-				<p class="block text-xs text-gray-600 mb-2">Favicon</p>
+				<p class="block text-xs text-muted mb-2">Favicon</p>
 				<AssetPicker
 					value={faviconUrl}
 					onSelect={(url) => { faviconUrl = url; }}
@@ -215,9 +210,9 @@
 			</div>
 
 			<div>
-				<p class="block text-xs text-gray-600 mb-2">
+				<p class="block text-xs text-muted mb-2">
 					Imagen Open Graph por defecto
-					<span class="text-gray-400">(se usa cuando una página no tiene OG image propia)</span>
+					<span class="text-faint">(se usa cuando una página no tiene OG image propia)</span>
 				</p>
 				<AssetPicker
 					value={ogImageUrl}
@@ -226,21 +221,15 @@
 			</div>
 
 			<div class="flex justify-end">
-				<button
-					type="submit"
-					disabled={savingAssets}
-					class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors"
-				>
-					{savingAssets ? 'Guardando…' : 'Guardar activos'}
-				</button>
+				<Button type="submit" loading={savingAssets}>Guardar activos</Button>
 			</div>
 		</form>
 	</div>
 
 	<!-- Google Analytics -->
-	<div class="bg-white border border-gray-200 rounded-lg p-5">
-		<h2 class="text-sm font-semibold text-gray-700 mb-1">Google Analytics 4</h2>
-		<p class="text-xs text-gray-500 mb-4">
+	<div class="bg-white border border-border-subtle rounded-lg p-5">
+		<h2 class="text-sm font-semibold text-body mb-1">Google Analytics 4</h2>
+		<p class="text-xs text-subtle mb-4">
 			El código de seguimiento se inyecta automáticamente en el sitio público. Deja vacío para desactivar.
 		</p>
 
@@ -254,7 +243,7 @@
 			class="flex items-end gap-3"
 		>
 			<div class="flex-1">
-				<label class="block text-xs text-gray-600 mb-1" for="ga4_id">
+				<label class="block text-xs text-muted mb-1" for="ga4_id">
 					Measurement ID
 				</label>
 				<input
@@ -264,16 +253,10 @@
 					bind:value={ga4Id}
 					placeholder="G-XXXXXXXXXX"
 					pattern="G-[A-Z0-9]+"
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
-			<button
-				type="submit"
-				disabled={savingGa4}
-				class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors"
-			>
-				{savingGa4 ? 'Guardando…' : 'Guardar'}
-			</button>
+			<Button type="submit" loading={savingGa4}>Guardar</Button>
 		</form>
 
 		{#if ga4Id}
@@ -284,19 +267,20 @@
 	</div>
 
 	<!-- Caché -->
-	<div class="bg-white border border-gray-200 rounded-lg p-5">
-		<h2 class="text-sm font-semibold text-gray-700 mb-1">Caché del sitio</h2>
-		<p class="text-xs text-gray-500 mb-4">
+	<div class="bg-white border border-border-subtle rounded-lg p-5">
+		<h2 class="text-sm font-semibold text-body mb-1">Caché del sitio</h2>
+		<p class="text-xs text-subtle mb-4">
 			Fuerza la recarga de todo el sitio público desde cero.
 			Úsalo si los cambios no se reflejan después de unos segundos.
 		</p>
-		<button
+		<Button
+			variant="danger"
 			onclick={() => confirmPurge = true}
-			disabled={purging}
-			class="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 disabled:opacity-60 transition-colors"
+			loading={purging}
+			loadingLabel="Purgando…"
 		>
-			{purging ? 'Purgando…' : 'Purgar caché'}
-		</button>
+			Purgar caché
+		</Button>
 	</div>
 </div>
 

@@ -5,5 +5,3 @@ export const CtaPropsSchema = z.object({
   href:    z.string(),
   variant: z.enum(['primary', 'secondary', 'ghost']).default('primary'),
 });
-
-export type CtaProps = z.infer<typeof CtaPropsSchema>;

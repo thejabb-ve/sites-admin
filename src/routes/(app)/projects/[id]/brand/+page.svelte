@@ -7,7 +7,9 @@
 	import FontSpecEditor    from '$lib/components/FontSpecEditor.svelte';
 	import BrandPreview      from '$lib/components/BrandPreview.svelte';
 	import ConfirmDialog     from '$lib/components/ConfirmDialog.svelte';
-	import type { FontSpec } from '$lib/components/FontSpecEditor.svelte';
+	import Button            from '$lib/components/Button.svelte';
+	import BrandLegalForm    from '$lib/components/BrandLegalForm.svelte';
+	import type { FontSpec, LegalDraft } from '$lib/types';
 	import type { PageData } from './$types';
 	import type { ActionResult } from '@sveltejs/kit';
 
@@ -223,19 +225,19 @@
 	let layoutProsePx   = $state(parsePx(s?.layout?.max_width_prose,    720));
 
 	// Legal
-	let legalAddress      = $state(s?.legal_info?.address       ?? '');
-	let legalName         = $state(s?.legal_info?.legal_name    ?? '');
-	let legalTaxId        = $state(s?.legal_info?.tax_id        ?? '');
-	let legalBusinessType = $state(s?.legal_info?.business_type ?? '');
-	let legalPostalCode   = $state(s?.legal_info?.postal_code   ?? '');
-	let legalCity         = $state(s?.legal_info?.city          ?? '');
-	let legalState        = $state(s?.legal_info?.state         ?? '');
-	let legalCountry      = $state(s?.legal_info?.country       ?? '');
-	let legalEmail        = $state(s?.legal_info?.email         ?? '');
-	let legalPhone        = $state(s?.legal_info?.phone         ?? '');
-	let legalLinks        = $state<{ label: string; href: string }[]>(
-		untrack(() => (s?.legal_info?.legalLinks ?? []).map(l => ({ ...l })))
-	);
+	let legalInfo = $state<LegalDraft>(untrack(() => ({
+		address:       s?.legal_info?.address       ?? '',
+		legal_name:    s?.legal_info?.legal_name    ?? '',
+		tax_id:        s?.legal_info?.tax_id        ?? '',
+		business_type: s?.legal_info?.business_type ?? '',
+		postal_code:   s?.legal_info?.postal_code   ?? '',
+		city:          s?.legal_info?.city          ?? '',
+		state:         s?.legal_info?.state         ?? '',
+		country:       s?.legal_info?.country       ?? '',
+		email:         s?.legal_info?.email         ?? '',
+		phone:         s?.legal_info?.phone         ?? '',
+		legalLinks:    (s?.legal_info?.legalLinks ?? []).map(l => ({ ...l })),
+	})));
 
 	let customCss = $state(s?.custom_css ?? '');
 
@@ -262,17 +264,17 @@
 			max_width_prose:   `${layoutProsePx}px`,
 		},
 		legal_info: {
-			address:       legalAddress       || undefined,
-			legal_name:    legalName          || undefined,
-			tax_id:        legalTaxId         || undefined,
-			business_type: legalBusinessType  || undefined,
-			postal_code:   legalPostalCode    || undefined,
-			city:          legalCity          || undefined,
-			state:         legalState         || undefined,
-			country:       legalCountry       || undefined,
-			email:         legalEmail         || undefined,
-			phone:         legalPhone         || undefined,
-			legalLinks:    legalLinks.length ? legalLinks : undefined,
+			address:       legalInfo.address       || undefined,
+			legal_name:    legalInfo.legal_name    || undefined,
+			tax_id:        legalInfo.tax_id        || undefined,
+			business_type: legalInfo.business_type || undefined,
+			postal_code:   legalInfo.postal_code   || undefined,
+			city:          legalInfo.city          || undefined,
+			state:         legalInfo.state         || undefined,
+			country:       legalInfo.country       || undefined,
+			email:         legalInfo.email         || undefined,
+			phone:         legalInfo.phone         || undefined,
+			legalLinks:    legalInfo.legalLinks.length ? legalInfo.legalLinks : undefined,
 		},
 		custom_css: customCss || null,
 	}));
@@ -287,16 +289,12 @@
 	let savingDraft      = $state(false);
 	let publishing       = $state(false);
 	let confirmOpen      = $state(false);
-	let confirmLegal     = $state(false);
-	let generatingLegal  = $state(false);
 
 	let draftFormEl      = $state<HTMLFormElement | undefined>();
 	let publishFormEl    = $state<HTMLFormElement | undefined>();
-	let legalFormEl      = $state<HTMLFormElement | undefined>();
 
 	function openConfirm() { confirmOpen = true; }
 	function doPublish()   { publishFormEl?.requestSubmit(); }
-	function doGenerateLegal() { legalFormEl?.requestSubmit(); }
 
 	// ─── Helpers colores dark ──────────────────────────────────────────────────
 
@@ -322,13 +320,6 @@
 		if (preset) { shadows = { ...preset.values }; activeShadowPreset = presetId; }
 	}
 
-	// ─── Helpers legal links ──────────────────────────────────────────────────
-
-	function addLegalLink()          { legalLinks = [...legalLinks, { label: '', href: '' }]; }
-	function removeLegalLink(i: number) { legalLinks = legalLinks.filter((_, idx) => idx !== i); }
-	function updateLegalLink(i: number, field: 'label' | 'href', val: string) {
-		legalLinks = legalLinks.map((l, idx) => idx === i ? { ...l, [field]: val } : l);
-	}
 </script>
 
 <svelte:head><title>Marca — {data.project.name}</title></svelte:head>
@@ -387,79 +378,47 @@
 	onConfirm={doPublish}
 />
 
-<form
-	method="POST"
-	action="?/generateLegalPages"
-	bind:this={legalFormEl}
-	use:enhance={() => {
-		generatingLegal = true;
-		return async ({ result, update }: { result: ActionResult; update: (opts?: { reset?: boolean }) => Promise<void> }) => {
-			await update({ reset: false });
-			generatingLegal = false;
-			if (result.type === 'success') {
-				toast('success', 'Páginas legales generadas correctamente.');
-			} else if (result.type === 'failure') {
-				toast('error', (result.data as Record<string, string>)?.error ?? 'Error al generar páginas legales.');
-			}
-		};
-	}}
-></form>
-
-<ConfirmDialog
-	bind:open={confirmLegal}
-	title="Generar páginas legales"
-	message="Se crearán o sobreescribirán las páginas /aviso-legal, /politica-de-privacidad y /politica-de-cookies usando los datos de la sección Legal. ¿Continuar?"
-	confirmLabel="Generar"
-	onConfirm={doGenerateLegal}
-/>
-
 <!-- ─── Página ───────────────────────────────────────────────────────────── -->
 <div class="space-y-6">
 
 	<!-- Breadcrumb -->
-	<div class="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle flex-wrap">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}" class="hover:text-gray-900">{data.project.name}</a>
+		<a href="/projects/{data.project.id}" class="hover:text-ink">{data.project.name}</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">Marca</span>
+		<span class="text-ink font-medium">Marca</span>
 	</div>
 
 	<!-- Título + badge + botones -->
 	<div class="flex items-center justify-between flex-wrap gap-3">
 		<div class="flex items-center gap-3">
-			<h1 class="text-xl font-semibold text-gray-900">Manual de marca</h1>
+			<h1 class="text-xl font-semibold text-ink">Manual de marca</h1>
 			{#if hasDraft}
-				<span class="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+				<span class="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-warning-hover">
 					BORRADOR
 				</span>
 			{/if}
 			{#if data.manual?.version}
-				<span class="text-xs text-gray-400">v{data.manual.version}</span>
+				<span class="text-xs text-faint">v{data.manual.version}</span>
 			{/if}
 		</div>
 		<div class="flex items-center gap-2">
-			<button
-				type="button"
+			<Button
+				variant="secondary"
 				onclick={() => draftFormEl?.requestSubmit()}
-				disabled={savingDraft}
-				class="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-50"
+				loading={savingDraft}
 			>
-				{savingDraft ? 'Guardando…' : 'Guardar borrador'}
-			</button>
-			<button
-				type="button"
-				onclick={openConfirm}
-				disabled={publishing}
-				class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-			>
-				{publishing ? 'Publicando…' : 'Publicar'}
-			</button>
+				Guardar borrador
+			</Button>
+			<Button onclick={openConfirm} loading={publishing} loadingLabel="Publicando…">
+				Publicar
+			</Button>
 		</div>
 	</div>
 
 	{#if !data.manual}
-		<div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+		<div class="bg-amber-50 border border-amber-200 rounded-md p-4 text-sm text-warning-hover">
 			Este proyecto no tiene un manual de marca aún. Completa los campos y haz clic en <strong>Publicar</strong> para crearlo.
 		</div>
 	{/if}
@@ -471,15 +430,15 @@
 		<div class="flex-1 min-w-0 space-y-4">
 
 			<!-- Tabs -->
-			<div class="flex gap-1 border-b border-gray-200 overflow-x-auto">
+			<div class="flex gap-1 border-b border-border-subtle overflow-x-auto">
 				{#each TABS as [tabId, tabLabel] (tabId)}
 					<button
 						type="button"
 						onclick={() => { activeTab = tabId; }}
 						class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors
 							{activeTab === tabId
-								? 'border-blue-600 text-blue-600'
-								: 'border-transparent text-gray-500 hover:text-gray-700'}"
+								? 'border-primary text-primary'
+								: 'border-transparent text-subtle hover:text-body'}"
 					>
 						{tabLabel}
 					</button>
@@ -488,10 +447,10 @@
 
 			<!-- ── Colores ── -->
 			{#if activeTab === 'colors'}
-				<div class="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
+				<div class="bg-white border border-border-subtle rounded-lg p-6 space-y-5">
 					{#each COLOR_KEYS as k (k)}
 						<div>
-							<p class="text-sm font-medium text-gray-700 mb-2">{COLOR_LABELS[k] ?? k}</p>
+							<p class="text-sm font-medium text-body mb-2">{COLOR_LABELS[k] ?? k}</p>
 							<HexColorPicker
 								value={colors[k] ?? DEFAULT_COLORS[k] ?? 'oklch(0.5 0.15 250)'}
 								onUpdate={(v) => { colors = { ...colors, [k]: v }; }}
@@ -502,8 +461,8 @@
 
 			<!-- ── Dark mode ── -->
 			{:else if activeTab === 'dark'}
-				<div class="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
-					<p class="text-sm text-gray-500">
+				<div class="bg-white border border-border-subtle rounded-lg p-6 space-y-5">
+					<p class="text-sm text-subtle">
 						Activa los colores que quieres sobreescribir en modo oscuro. Los desactivados heredan el valor light.
 					</p>
 					{#each COLOR_KEYS as k (k)}
@@ -516,7 +475,7 @@
 									onchange={() => toggleDark(k)}
 									class="w-4 h-4 rounded accent-blue-600"
 								/>
-								<label for="dark-{k}" class="text-sm font-medium text-gray-700">
+								<label for="dark-{k}" class="text-sm font-medium text-body">
 									{COLOR_LABELS[k] ?? k}
 								</label>
 							</div>
@@ -534,7 +493,7 @@
 
 			<!-- ── Tipografía ── -->
 			{:else if activeTab === 'typography'}
-				<div class="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+				<div class="bg-white border border-border-subtle rounded-lg p-6 space-y-6">
 					<div>
 						<h3 class="text-sm font-semibold text-gray-800 mb-3">Fuente de títulos (Display)</h3>
 						<FontSpecEditor
@@ -542,7 +501,7 @@
 							onUpdate={(v) => { typography = { ...typography, display: v }; }}
 						/>
 					</div>
-					<hr class="border-gray-100" />
+					<hr class="border-border-faint" />
 					<div>
 						<h3 class="text-sm font-semibold text-gray-800 mb-3">Fuente de cuerpo (Body)</h3>
 						<FontSpecEditor
@@ -550,7 +509,7 @@
 							onUpdate={(v) => { typography = { ...typography, body: v }; }}
 						/>
 					</div>
-					<hr class="border-gray-100" />
+					<hr class="border-border-faint" />
 					<div>
 						<div class="flex items-center gap-2 mb-3">
 							<input
@@ -574,12 +533,12 @@
 							/>
 						{/if}
 					</div>
-					<hr class="border-gray-100" />
+					<hr class="border-border-faint" />
 					<div>
 						<h3 class="text-sm font-semibold text-gray-800 mb-4">Escala tipográfica</h3>
 						<div class="grid grid-cols-2 gap-5">
 							<div>
-								<label for="typo-size-base" class="block text-xs text-gray-600 mb-1">Tamaño base de texto</label>
+								<label for="typo-size-base" class="block text-xs text-muted mb-1">Tamaño base de texto</label>
 								<div class="flex items-center gap-2">
 									<input
 										id="typo-size-base"
@@ -587,14 +546,14 @@
 										min="12" max="24" step="1"
 										value={sizeBasePx}
 										oninput={(e) => { sizeBasePx = parseInt((e.target as HTMLInputElement).value) || 16; }}
-										class="w-20 border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+										class="w-20 border border-border rounded-md px-2 py-1.5 text-sm"
 									/>
-									<span class="text-sm text-gray-500">px</span>
+									<span class="text-sm text-subtle">px</span>
 								</div>
-								<p class="text-xs text-gray-400 mt-1">Recomendado: 16 px</p>
+								<p class="text-xs text-faint mt-1">Recomendado: 16 px</p>
 							</div>
 							<div>
-								<label for="typo-line-height" class="block text-xs text-gray-600 mb-1">Interlineado</label>
+								<label for="typo-line-height" class="block text-xs text-muted mb-1">Interlineado</label>
 								<div class="flex items-center gap-2">
 									<input
 										id="typo-line-height"
@@ -602,19 +561,19 @@
 										min="1" max="3" step="0.05"
 										value={lineHeight}
 										oninput={(e) => { lineHeight = parseFloat((e.target as HTMLInputElement).value) || 1.5; }}
-										class="w-20 border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+										class="w-20 border border-border rounded-md px-2 py-1.5 text-sm"
 									/>
-									<span class="text-sm text-gray-500">× tamaño</span>
+									<span class="text-sm text-subtle">× tamaño</span>
 								</div>
-								<p class="text-xs text-gray-400 mt-1">Recomendado: 1.5</p>
+								<p class="text-xs text-faint mt-1">Recomendado: 1.5</p>
 							</div>
 							<div class="col-span-2">
-								<label for="typo-tracking" class="block text-xs text-gray-600 mb-1">
+								<label for="typo-tracking" class="block text-xs text-muted mb-1">
 									Espaciado entre letras (tracking)
-									<span class="font-normal text-gray-400">— {trackingEm >= 0 ? '+' : ''}{trackingEm.toFixed(3)}em</span>
+									<span class="font-normal text-faint">— {trackingEm >= 0 ? '+' : ''}{trackingEm.toFixed(3)}em</span>
 								</label>
 								<div class="flex items-center gap-3">
-									<span class="text-xs text-gray-400 whitespace-nowrap">Apretado</span>
+									<span class="text-xs text-faint whitespace-nowrap">Apretado</span>
 									<input
 										id="typo-tracking"
 										type="range"
@@ -623,7 +582,7 @@
 										oninput={(e) => { trackingEm = parseFloat((e.target as HTMLInputElement).value); }}
 										class="flex-1 accent-blue-600"
 									/>
-									<span class="text-xs text-gray-400 whitespace-nowrap">Espaciado</span>
+									<span class="text-xs text-faint whitespace-nowrap">Espaciado</span>
 								</div>
 							</div>
 						</div>
@@ -632,12 +591,12 @@
 
 			<!-- ── Tokens ── -->
 			{:else if activeTab === 'tokens'}
-				<div class="bg-white border border-gray-200 rounded-lg p-6 space-y-8">
+				<div class="bg-white border border-border-subtle rounded-lg p-6 space-y-8">
 
 					<!-- Border radius -->
 					<div>
 						<h3 class="text-sm font-semibold text-gray-800 mb-1">Redondeo de esquinas</h3>
-						<p class="text-xs text-gray-500 mb-4">Define el estilo visual de los elementos del sitio.</p>
+						<p class="text-xs text-subtle mb-4">Define el estilo visual de los elementos del sitio.</p>
 						<div class="flex gap-3 flex-wrap">
 							{#each RADII_PRESETS as p (p.id)}
 								<button
@@ -645,15 +604,15 @@
 									onclick={() => applyRadiiPreset(p.id)}
 									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-colors
 										{activeRadiiPreset === p.id
-											? 'border-blue-600 bg-blue-50'
-											: 'border-gray-200 hover:border-gray-300 bg-white'}"
+											? 'border-primary bg-blue-50'
+											: 'border-border-subtle hover:border-border bg-white'}"
 								>
 									<div
-										class="w-10 h-10 border-2 bg-gray-100
-											{activeRadiiPreset === p.id ? 'border-blue-500' : 'border-gray-400'}"
+										class="w-10 h-10 border-2 bg-surface-muted-strong
+											{activeRadiiPreset === p.id ? 'border-blue-500' : 'border-faint'}"
 										style="border-radius: {p.values.md};"
 									></div>
-									<span class="text-xs font-medium {activeRadiiPreset === p.id ? 'text-blue-700' : 'text-gray-600'}">
+									<span class="text-xs font-medium {activeRadiiPreset === p.id ? 'text-primary-hover' : 'text-muted'}">
 										{p.label}
 									</span>
 								</button>
@@ -661,12 +620,12 @@
 						</div>
 					</div>
 
-					<hr class="border-gray-100" />
+					<hr class="border-border-faint" />
 
 					<!-- Sombras -->
 					<div>
 						<h3 class="text-sm font-semibold text-gray-800 mb-1">Sombras</h3>
-						<p class="text-xs text-gray-500 mb-4">Intensidad de la profundidad visual en tarjetas y modales.</p>
+						<p class="text-xs text-subtle mb-4">Intensidad de la profundidad visual en tarjetas y modales.</p>
 						<div class="flex gap-3 flex-wrap">
 							{#each SHADOW_PRESETS as p (p.id)}
 								<button
@@ -674,15 +633,15 @@
 									onclick={() => applyShadowPreset(p.id)}
 									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-colors
 										{activeShadowPreset === p.id
-											? 'border-blue-600 bg-blue-50'
-											: 'border-gray-200 hover:border-gray-300 bg-white'}"
+											? 'border-primary bg-blue-50'
+											: 'border-border-subtle hover:border-border bg-white'}"
 								>
 									<div
 										class="w-12 h-10 bg-white rounded-md
-											{activeShadowPreset === p.id ? 'border border-blue-100' : 'border border-gray-100'}"
+											{activeShadowPreset === p.id ? 'border border-blue-100' : 'border border-border-faint'}"
 										style="box-shadow: {p.values.md !== 'none' ? p.values.md : 'none'};"
 									></div>
-									<span class="text-xs font-medium {activeShadowPreset === p.id ? 'text-blue-700' : 'text-gray-600'}">
+									<span class="text-xs font-medium {activeShadowPreset === p.id ? 'text-primary-hover' : 'text-muted'}">
 										{p.label}
 									</span>
 								</button>
@@ -690,14 +649,14 @@
 						</div>
 					</div>
 
-					<hr class="border-gray-100" />
+					<hr class="border-border-faint" />
 
 					<!-- Layout -->
 					<div>
 						<h3 class="text-sm font-semibold text-gray-800 mb-4">Ancho máximo del contenido</h3>
 						<div class="grid grid-cols-2 gap-5">
 							<div>
-								<label for="layout-content" class="block text-xs text-gray-600 mb-1">Contenido general</label>
+								<label for="layout-content" class="block text-xs text-muted mb-1">Contenido general</label>
 								<div class="flex items-center gap-2">
 									<input
 										id="layout-content"
@@ -705,14 +664,14 @@
 										min="800" max="2000" step="40"
 										value={layoutContentPx}
 										oninput={(e) => { layoutContentPx = parseInt((e.target as HTMLInputElement).value) || 1280; }}
-										class="w-24 border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+										class="w-24 border border-border rounded-md px-2 py-1.5 text-sm"
 									/>
-									<span class="text-sm text-gray-500">px</span>
+									<span class="text-sm text-subtle">px</span>
 								</div>
-								<p class="text-xs text-gray-400 mt-1">Recomendado: 1280 px</p>
+								<p class="text-xs text-faint mt-1">Recomendado: 1280 px</p>
 							</div>
 							<div>
-								<label for="layout-prose" class="block text-xs text-gray-600 mb-1">Texto largo / artículos</label>
+								<label for="layout-prose" class="block text-xs text-muted mb-1">Texto largo / artículos</label>
 								<div class="flex items-center gap-2">
 									<input
 										id="layout-prose"
@@ -720,23 +679,23 @@
 										min="400" max="1200" step="20"
 										value={layoutProsePx}
 										oninput={(e) => { layoutProsePx = parseInt((e.target as HTMLInputElement).value) || 720; }}
-										class="w-24 border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+										class="w-24 border border-border rounded-md px-2 py-1.5 text-sm"
 									/>
-									<span class="text-sm text-gray-500">px</span>
+									<span class="text-sm text-subtle">px</span>
 								</div>
-								<p class="text-xs text-gray-400 mt-1">Recomendado: 720 px</p>
+								<p class="text-xs text-faint mt-1">Recomendado: 720 px</p>
 							</div>
 						</div>
 					</div>
 
-					<hr class="border-gray-100" />
+					<hr class="border-border-faint" />
 
 					<!-- Espaciado -->
 					<div>
 						<h3 class="text-sm font-semibold text-gray-800 mb-1">Espaciado general</h3>
-						<p class="text-xs text-gray-500 mb-3">Multiplica el espaciado base del sitio. 1 = normal.</p>
+						<p class="text-xs text-subtle mb-3">Multiplica el espaciado base del sitio. 1 = normal.</p>
 						<div class="flex items-center gap-3">
-							<span class="text-xs text-gray-400 whitespace-nowrap">Compacto (0.75)</span>
+							<span class="text-xs text-faint whitespace-nowrap">Compacto (0.75)</span>
 							<input
 								id="spacing-scale"
 								type="range"
@@ -745,9 +704,9 @@
 								oninput={(e) => { spacing = { scale: parseFloat((e.target as HTMLInputElement).value) }; }}
 								class="flex-1 accent-blue-600"
 							/>
-							<span class="text-xs text-gray-400 whitespace-nowrap">Espacioso (1.5)</span>
+							<span class="text-xs text-faint whitespace-nowrap">Espacioso (1.5)</span>
 						</div>
-						<p class="text-xs text-gray-500 mt-2 text-center">
+						<p class="text-xs text-subtle mt-2 text-center">
 							Valor actual: <strong>{(spacing.scale ?? 1).toFixed(2)}×</strong>
 						</p>
 					</div>
@@ -756,209 +715,28 @@
 
 			<!-- ── Legal ── -->
 			{:else if activeTab === 'legal'}
-				<div class="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
-
-					<!-- Identificación fiscal -->
-					<div>
-						<h3 class="text-sm font-semibold text-gray-800 mb-4">Datos de la empresa</h3>
-						<div class="space-y-4">
-							<div>
-								<label for="legal-name" class="block text-xs font-medium text-gray-600 mb-1">Nombre legal de la empresa</label>
-								<input
-									id="legal-name"
-									type="text"
-									value={legalName}
-									oninput={(e) => { legalName = (e.target as HTMLInputElement).value; }}
-									placeholder="Mi Empresa S.A. de C.V."
-									class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-								/>
-							</div>
-							<div>
-								<label for="legal-business-type" class="block text-xs font-medium text-gray-600 mb-1">Razón social / Giro de negocio</label>
-								<input
-									id="legal-business-type"
-									type="text"
-									value={legalBusinessType}
-									oninput={(e) => { legalBusinessType = (e.target as HTMLInputElement).value; }}
-									placeholder="Servicios de tecnología"
-									class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-								/>
-							</div>
-							<div>
-								<label for="legal-tax-id" class="block text-xs font-medium text-gray-600 mb-1">Número de identificación fiscal (RFC / NIT / CIF…)</label>
-								<input
-									id="legal-tax-id"
-									type="text"
-									value={legalTaxId}
-									oninput={(e) => { legalTaxId = (e.target as HTMLInputElement).value; }}
-									placeholder="XAXX010101000"
-									class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono"
-								/>
-							</div>
-						</div>
-					</div>
-
-					<hr class="border-gray-100" />
-
-					<!-- Dirección -->
-					<div>
-						<h3 class="text-sm font-semibold text-gray-800 mb-4">Dirección</h3>
-						<div class="space-y-4">
-							<div>
-								<label for="legal-address" class="block text-xs font-medium text-gray-600 mb-1">Calle y número</label>
-								<textarea
-									id="legal-address"
-									rows="2"
-									value={legalAddress}
-									oninput={(e) => { legalAddress = (e.target as HTMLTextAreaElement).value; }}
-									placeholder="Av. Ejemplo 123, Col. Centro"
-									class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-y"
-								></textarea>
-							</div>
-							<div class="grid grid-cols-2 gap-4">
-								<div>
-									<label for="legal-postal-code" class="block text-xs font-medium text-gray-600 mb-1">Código postal</label>
-									<input
-										id="legal-postal-code"
-										type="text"
-										value={legalPostalCode}
-										oninput={(e) => { legalPostalCode = (e.target as HTMLInputElement).value; }}
-										placeholder="06600"
-										class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label for="legal-city" class="block text-xs font-medium text-gray-600 mb-1">Ciudad</label>
-									<input
-										id="legal-city"
-										type="text"
-										value={legalCity}
-										oninput={(e) => { legalCity = (e.target as HTMLInputElement).value; }}
-										placeholder="Ciudad de México"
-										class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-									/>
-								</div>
-							</div>
-							<div class="grid grid-cols-2 gap-4">
-								<div>
-									<label for="legal-state" class="block text-xs font-medium text-gray-600 mb-1">Estado / Provincia</label>
-									<input
-										id="legal-state"
-										type="text"
-										value={legalState}
-										oninput={(e) => { legalState = (e.target as HTMLInputElement).value; }}
-										placeholder="CDMX"
-										class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label for="legal-country" class="block text-xs font-medium text-gray-600 mb-1">País</label>
-									<input
-										id="legal-country"
-										type="text"
-										value={legalCountry}
-										oninput={(e) => { legalCountry = (e.target as HTMLInputElement).value; }}
-										placeholder="México"
-										class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-									/>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<hr class="border-gray-100" />
-
-					<!-- Contacto -->
-					<div>
-						<h3 class="text-sm font-semibold text-gray-800 mb-4">Contacto</h3>
-						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<label for="legal-email" class="block text-xs font-medium text-gray-600 mb-1">Correo electrónico</label>
-								<input
-									id="legal-email"
-									type="email"
-									value={legalEmail}
-									oninput={(e) => { legalEmail = (e.target as HTMLInputElement).value; }}
-									placeholder="contacto@empresa.com"
-									class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-								/>
-							</div>
-							<div>
-								<label for="legal-phone" class="block text-xs font-medium text-gray-600 mb-1">Teléfono</label>
-								<input
-									id="legal-phone"
-									type="tel"
-									value={legalPhone}
-									oninput={(e) => { legalPhone = (e.target as HTMLInputElement).value; }}
-									placeholder="+52 55 1234 5678"
-									class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-								/>
-							</div>
-						</div>
-					</div>
-
-					<hr class="border-gray-100" />
-
-					<!-- Enlaces legales -->
-					<div>
-						<div class="flex items-center justify-between mb-3">
-							<h3 class="text-sm font-semibold text-gray-800">Enlaces legales</h3>
-							<button type="button" onclick={addLegalLink} class="text-xs text-blue-600 hover:text-blue-800">
-								+ Añadir enlace
-							</button>
-						</div>
-						{#each legalLinks as link, i (i)}
-							<div class="flex gap-2 items-center mb-2">
-								<input
-									type="text"
-									value={link.label}
-									oninput={(e) => updateLegalLink(i, 'label', (e.target as HTMLInputElement).value)}
-									placeholder="Aviso Legal"
-									class="w-36 border border-gray-300 rounded-md px-2 py-1.5 text-sm"
-								/>
-								<input
-									type="url"
-									value={link.href}
-									oninput={(e) => updateLegalLink(i, 'href', (e.target as HTMLInputElement).value)}
-									placeholder="https://..."
-									class="flex-1 border border-gray-300 rounded-md px-2 py-1.5 text-sm font-mono"
-								/>
-								<button type="button" onclick={() => removeLegalLink(i)} class="text-gray-400 hover:text-red-500 px-1">
-									✕
-								</button>
-							</div>
-						{/each}
-						{#if !legalLinks.length}
-							<p class="text-xs text-gray-400">Sin enlaces legales configurados.</p>
-						{/if}
-					</div>
-
-					<hr class="border-gray-100" />
-
-					<!-- Generar páginas legales -->
-					<div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-						<p class="text-sm font-medium text-gray-700 mb-1">Páginas legales</p>
-						<p class="text-xs text-gray-500 mb-3">
-							Crea o sobreescribe las tres páginas legales del sitio usando los datos configurados arriba.
-							Si los campos están vacíos se incluirán marcadores de posición visibles.
-						</p>
-						<button
-							type="button"
-							onclick={() => { confirmLegal = true; }}
-							disabled={generatingLegal}
-							class="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-50"
-						>
-							{generatingLegal ? 'Generando…' : 'Generar páginas legales'}
-						</button>
-					</div>
-				</div>
+				<BrandLegalForm
+					address={legalInfo.address}
+					legalName={legalInfo.legal_name}
+					taxId={legalInfo.tax_id}
+					businessType={legalInfo.business_type}
+					postalCode={legalInfo.postal_code}
+					city={legalInfo.city}
+					region={legalInfo.state}
+					country={legalInfo.country}
+					email={legalInfo.email}
+					phone={legalInfo.phone}
+					legalLinks={legalInfo.legalLinks}
+					action="?/generateLegalPages"
+					onUpdate={(v) => { legalInfo = v; }}
+				/>
 
 			<!-- ── CSS custom ── -->
 			{:else if activeTab === 'css'}
-				<div class="bg-white border border-gray-200 rounded-lg p-6">
-					<label for="custom-css" class="block text-sm font-medium text-gray-700 mb-2">
+				<div class="bg-white border border-border-subtle rounded-lg p-6">
+					<label for="custom-css" class="block text-sm font-medium text-body mb-2">
 						CSS personalizado
-						<span class="ml-1 font-normal text-gray-400 text-xs">(se inyecta en &lt;head&gt;)</span>
+						<span class="ml-1 font-normal text-faint text-xs">(se inyecta en &lt;head&gt;)</span>
 					</label>
 					<textarea
 						id="custom-css"
@@ -966,7 +744,7 @@
 						value={customCss}
 						oninput={(e) => { customCss = (e.target as HTMLTextAreaElement).value; }}
 						placeholder="/* Variables adicionales, overrides de componentes... */"
-						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono resize-y"
+						class="w-full border border-border rounded-md px-3 py-2 text-sm font-mono resize-y"
 						spellcheck="false"
 					></textarea>
 				</div>
@@ -976,17 +754,17 @@
 
 		<!-- ── Preview panel ── -->
 		<div class="w-80 xl:w-96 flex-shrink-0 sticky top-4 flex flex-col" style="max-height: calc(100vh - 2rem);">
-			<div class="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col min-h-0 flex-1">
+			<div class="bg-white border border-border-subtle rounded-lg overflow-hidden flex flex-col min-h-0 flex-1">
 				<!-- Barra de título -->
-				<div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50 flex-shrink-0">
-					<span class="text-xs font-medium text-gray-600">
+				<div class="flex items-center justify-between px-3 py-2 border-b border-border-faint bg-surface-muted flex-shrink-0">
+					<span class="text-xs font-medium text-muted">
 						Vista previa{hasDraft ? ' · borrador' : ''}
 					</span>
 					{#if data.previewUrl}
 						<button
 							type="button"
 							onclick={() => iframeKey++}
-							class="text-xs text-gray-400 hover:text-gray-700"
+							class="text-xs text-faint hover:text-body"
 							title="Recargar"
 						>↺</button>
 					{/if}
@@ -1006,8 +784,8 @@
 						<div class="flex-1">
 							<BrandPreview {colors} typography={{ display: typography.display, body: typography.body, mono: monoEnabled ? typography.mono : undefined }} {radii} {shadows} />
 						</div>
-						<div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0">
-							<p class="text-xs text-gray-400 text-center">
+						<div class="px-4 py-3 bg-surface-muted border-t border-border-faint flex-shrink-0">
+							<p class="text-xs text-faint text-center">
 								Configura un dominio activo para ver el preview del sitio completo.
 							</p>
 						</div>

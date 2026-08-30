@@ -128,7 +128,7 @@
 		value={hexText}
 		oninput={(e) => handleHexText((e.target as HTMLInputElement).value)}
 		class="flex-1 border rounded-md px-2 py-1.5 text-sm font-mono uppercase tracking-wider focus:ring-2 focus:ring-blue-500 focus:border-transparent
-			{hexValid ? 'border-gray-300' : 'border-red-400 bg-red-50'}"
+			{hexValid ? 'border-border' : 'border-red-400 bg-red-50'}"
 		placeholder="#3b82f6"
 		maxlength="7"
 		spellcheck="false"

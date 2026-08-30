@@ -1,17 +1,12 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { z } from 'zod/v4';
 import type { PageServerLoad, Actions } from './$types';
-import { logAudit } from '$lib/audit';
+import { logProjectAudit } from '$lib/audit';
 import { LEGAL_PAGES, type LegalInfo } from '$lib/legalTemplates';
+import { requireProject } from '$lib/server/project';
+import type { FontSpec } from '$lib/types';
 
 // ─── Tipos locales ────────────────────────────────────────────────────────────
-
-export interface FontSpec {
-	family:  string;
-	weights: number[];
-	source:  'google' | 'system' | 'custom';
-	urls?:   { weight: number; style?: string; url: string }[];
-}
 
 export interface BrandDraft {
 	colors:      Record<string, string>;
@@ -126,13 +121,7 @@ function asRecord(v: unknown): Record<string, unknown> {
 // ─── Load ─────────────────────────────────────────────────────────────────────
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name, canonical_domain')
-		.eq('id', params.id)
-		.single();
-
-	if (!project) error(404, 'Proyecto no encontrado.');
+	const project = await requireProject(locals.supabase, params.id, 'id, name, canonical_domain');
 
 	const [{ data: manual }, { data: domains }] = await Promise.all([
 		locals.supabase
@@ -220,12 +209,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al guardar borrador.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'update',
 			resourceType: 'brand',
 			resourceName: 'Manual de marca (borrador)',
@@ -274,12 +258,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al publicar.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'publish',
 			resourceType: 'brand',
 			resourceName: 'Manual de marca',
@@ -346,12 +325,7 @@ export const actions: Actions = {
 			if (blockError) return fail(500, { error: `Error al crear bloque de ${lp.slug}.` });
 		}
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase:     locals.supabase,
-			projectId:    params.id,
-			userId:       user?.id ?? null,
-			actor:        user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action:       'create',
 			resourceType: 'page',
 			resourceName: 'Páginas legales (aviso, privacidad, cookies)',

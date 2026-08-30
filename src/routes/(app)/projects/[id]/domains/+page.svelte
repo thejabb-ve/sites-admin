@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { toast } from '$lib/toast.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { pollUntil, type PollHandle } from '$lib/poll';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -17,7 +20,7 @@
 	let activeDomainId = $state<string | null>(null);
 	let configError = $state('');
 	let submitting  = $state(false);
-	let pollInterval: ReturnType<typeof setInterval> | null = null;
+	let poll: PollHandle | null = null;
 
 	// ── Desconetar dominio ────────────────────────────────────────────────────
 	let confirmDisconnect = $state(false);
@@ -100,34 +103,38 @@
 
 	// ── Step 3: polling de estado ─────────────────────────────────────────────
 	function startPolling() {
-		pollInterval = setInterval(pollStatus, 3000);
-	}
+		poll = pollUntil({
+			intervalMs: 3000,
+			maxTries:   60, // ~3 min de tope de seguridad
+			fn: async () => {
+				if (!activeDomainId) return true;
+				try {
+					const res  = await fetch(`/api/projects/${data.project.id}/domains?statusOf=${activeDomainId}`);
+					const json = await res.json() as { status?: string; error_message?: string };
+					if (!res.ok) return false;
 
-	async function pollStatus() {
-		if (!activeDomainId) return;
-		try {
-			const res  = await fetch(`/api/projects/${data.project.id}/domains?statusOf=${activeDomainId}`);
-			const json = await res.json() as { status?: string; error_message?: string };
-			if (!res.ok) return;
-
-			const s = json.status ?? '';
-			if (s === 'active') {
-				stopPolling();
-				step = 'done';
-			} else if (s === 'error') {
-				stopPolling();
-				configError = json.error_message ?? 'Error desconocido durante la configuración.';
-				step        = 'error';
-			}
-		} catch { /* ignorar errores de red durante el polling */ }
+					const s = json.status ?? '';
+					if (s === 'active') {
+						step = 'done';
+						return true;
+					}
+					if (s === 'error') {
+						configError = json.error_message ?? 'Error desconocido durante la configuración.';
+						step        = 'error';
+						return true;
+					}
+					return false;
+				} catch { return false; /* ignorar errores de red durante el polling */ }
+			},
+		});
 	}
 
 	function stopPolling() {
-		if (pollInterval !== null) {
-			clearInterval(pollInterval);
-			pollInterval = null;
-		}
+		poll?.stop();
+		poll = null;
 	}
+
+	onDestroy(stopPolling);
 
 	function reset() {
 		stopPolling();
@@ -141,7 +148,7 @@
 
 	// ── Helpers de UI ─────────────────────────────────────────────────────────
 	const STATUS_BADGE: Record<string, string> = {
-		pending:     'bg-gray-100 text-gray-600',
+		pending:     'bg-surface-muted-strong text-muted',
 		configuring: 'bg-yellow-50 text-yellow-700',
 		active:      'bg-green-50 text-green-700',
 		error:       'bg-red-50 text-red-700',
@@ -168,33 +175,33 @@
 
 <div class="space-y-8">
 	<!-- Breadcrumb + título -->
-	<div class="flex items-center gap-2 text-sm text-gray-500">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}" class="hover:text-gray-900">{data.project.name}</a>
+		<a href="/projects/{data.project.id}" class="hover:text-ink">{data.project.name}</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">Dominios</span>
+		<span class="text-ink font-medium">Dominios</span>
 	</div>
 
-	<h1 class="text-xl font-semibold text-gray-900">Gestión de dominios</h1>
+	<h1 class="text-xl font-semibold text-ink">Gestión de dominios</h1>
 
 	<!-- ── Lista de dominios existentes ─────────────────────────────────── -->
 	{#if data.domains.length > 0}
 		<section>
-			<h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+			<h2 class="text-sm font-semibold text-body uppercase tracking-wide mb-3">
 				Dominios conectados
 			</h2>
-			<ul class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-lg">
+			<ul class="divide-y divide-border-faint bg-white border border-border-subtle rounded-lg">
 				{#each data.domains as domain (domain.id)}
 					<li class="px-4 py-3 flex items-center justify-between gap-4">
 						<div class="flex items-center gap-3 min-w-0">
-							<span class="text-sm text-gray-800 font-mono truncate">{domain.domain}</span>
+							<span class="text-sm text-body font-mono truncate">{domain.domain}</span>
 							{#if domain.status === 'active'}
 								<a
 									href="https://www.{domain.domain}"
 									target="_blank"
 									rel="noopener noreferrer"
-									class="text-xs text-blue-600 hover:underline shrink-0"
+									class="text-xs text-primary hover:underline shrink-0"
 								>↗ Ver sitio</a>
 							{/if}
 						</div>
@@ -203,13 +210,13 @@
 								{STATUS_LABEL[domain.status] ?? domain.status}
 							</span>
 							{#if domain.status === 'error' && domain.error_message}
-								<span class="text-xs text-red-600 max-w-48 truncate" title={domain.error_message}>
+								<span class="text-xs text-danger max-w-48 truncate" title={domain.error_message}>
 									{domain.error_message}
 								</span>
 							{/if}
 							<button
 								onclick={() => askDisconnect(domain.id, domain.domain)}
-								class="text-xs text-gray-400 hover:text-red-600 transition-colors"
+								class="text-xs text-faint hover:text-danger transition-colors"
 							>
 								Desconectar
 							</button>
@@ -222,16 +229,16 @@
 
 	<!-- ── Wizard ────────────────────────────────────────────────────────── -->
 	<section>
-		<h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+		<h2 class="text-sm font-semibold text-body uppercase tracking-wide mb-4">
 			Conectar nuevo dominio
 		</h2>
 
-		<div class="bg-white border border-gray-200 rounded-lg p-6 max-w-xl">
+		<div class="bg-white border border-border-subtle rounded-lg p-6 max-w-xl">
 
 			<!-- Step 1: buscar dominio -->
 			{#if step === 'search'}
 				<div class="space-y-4">
-					<p class="text-sm text-gray-600">
+					<p class="text-sm text-muted">
 						Introduce el dominio que quieres conectar a este proyecto.
 					</p>
 					<div class="flex gap-2">
@@ -239,16 +246,16 @@
 							type="text"
 							bind:value={domainInput}
 							placeholder="ejemplo.com"
-							class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-mono"
+							class="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent font-mono"
 							onkeydown={(e) => e.key === 'Enter' && checkDomain()}
 						/>
-						<button
+						<Button
+							variant="dark"
 							onclick={checkDomain}
 							disabled={checking || !domainInput.trim()}
-							class="px-4 py-2 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						>
 							{checking ? 'Comprobando…' : 'Verificar'}
-						</button>
+						</Button>
 					</div>
 
 					<!-- Dominio libre: instrucciones de compra manual -->
@@ -268,12 +275,9 @@
 								<li>Cloudflare tardará ~1 minuto en activar la zona</li>
 								<li>Vuelve aquí y pulsa el botón de abajo</li>
 							</ol>
-							<button
-								onclick={() => goToConfirm(true)}
-								class="px-4 py-2 text-sm bg-amber-700 text-white rounded-md hover:bg-amber-800 transition-colors"
-							>
+							<Button variant="warning" onclick={() => goToConfirm(true)}>
 								Ya lo compré — configurar ahora
-							</button>
+							</Button>
 						</div>
 					{/if}
 
@@ -288,12 +292,9 @@
 									Si este dominio está en tu cuenta de Cloudflare, puedes configurarlo automáticamente ahora.
 								</p>
 							</div>
-							<button
-								onclick={() => goToConfirm(false)}
-								class="px-4 py-2 text-sm bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors"
-							>
+							<Button variant="success" onclick={() => goToConfirm(false)}>
 								Conectar y configurar
-							</button>
+							</Button>
 						</div>
 					{/if}
 				</div>
@@ -302,8 +303,8 @@
 			{:else if step === 'confirm'}
 				<div class="space-y-5">
 					<div>
-						<p class="text-sm text-gray-500 mb-1">Dominio</p>
-						<p class="text-base font-mono font-semibold text-gray-900">{domainInput.trim()}</p>
+						<p class="text-sm text-subtle mb-1">Dominio</p>
+						<p class="text-base font-mono font-semibold text-ink">{domainInput.trim()}</p>
 					</div>
 
 					{#if wasAvailable}
@@ -315,8 +316,8 @@
 					{/if}
 
 					<div>
-						<p class="text-sm text-gray-500 mb-2">Se configurará automáticamente:</p>
-						<ul class="text-sm text-gray-700 space-y-1">
+						<p class="text-sm text-subtle mb-2">Se configurará automáticamente:</p>
+						<ul class="text-sm text-body space-y-1">
 							<li>✓ Zona Cloudflare para el dominio</li>
 							<li>✓ Dominio añadido al proyecto Vercel</li>
 							<li>✓ DNS: <span class="font-mono">www</span> y apex → Vercel</li>
@@ -325,26 +326,25 @@
 						</ul>
 					</div>
 					<div class="flex gap-2 pt-2">
-						<button
+						<Button
+							variant="dark"
 							onclick={startSetup}
 							disabled={submitting}
-							class="px-5 py-2 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							loading={submitting}
+							loadingLabel="Iniciando…"
 						>
-							{submitting ? 'Iniciando…' : 'Confirmar configuración'}
-						</button>
-						<button
-							onclick={() => step = 'search'}
-							class="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:border-gray-500 transition-colors"
-						>
+							Confirmar configuración
+						</Button>
+						<Button variant="secondary" onclick={() => step = 'search'}>
 							Atrás
-						</button>
+						</Button>
 					</div>
 				</div>
 
 			<!-- Step 3: configurando -->
 			{:else if step === 'configuring'}
 				<div class="space-y-5">
-					<p class="text-sm font-medium text-gray-900">
+					<p class="text-sm font-medium text-ink">
 						Configurando <span class="font-mono">{domainInput.trim()}</span>…
 					</p>
 					<ul class="space-y-3">
@@ -355,13 +355,13 @@
 							'Aplicando regla de caché (30 días)',
 							'Configurando redirección apex → www',
 						] as label}
-							<li class="flex items-center gap-3 text-sm text-gray-600">
-								<span class="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-900 animate-spin shrink-0"></span>
+							<li class="flex items-center gap-3 text-sm text-muted">
+								<span class="w-4 h-4 rounded-full border-2 border-border border-t-ink animate-spin shrink-0"></span>
 								{label}
 							</li>
 						{/each}
 					</ul>
-					<p class="text-xs text-gray-400">
+					<p class="text-xs text-faint">
 						Este proceso puede tardar entre 30 y 90 segundos. No cierres esta ventana.
 					</p>
 				</div>
@@ -372,29 +372,26 @@
 					<div class="flex items-center gap-3">
 						<span class="text-2xl">✅</span>
 						<div>
-							<p class="text-sm font-semibold text-gray-900">
+							<p class="text-sm font-semibold text-ink">
 								{domainInput.trim()} está activo
 							</p>
 							<a
 								href="https://www.{domainInput.trim()}"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="text-sm text-blue-600 hover:underline"
+								class="text-sm text-primary hover:underline"
 							>
 								https://www.{domainInput.trim()} ↗
 							</a>
 						</div>
 					</div>
-					<p class="text-xs text-gray-500">
+					<p class="text-xs text-subtle">
 						La propagación DNS puede tardar hasta 24h en completarse globalmente.
 						El sitio ya es accesible pero algunos usuarios pueden ver aún la versión anterior.
 					</p>
-					<button
-						onclick={() => location.reload()}
-						class="px-4 py-2 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors"
-					>
+					<Button variant="dark" onclick={() => location.reload()}>
 						Volver a la lista
-					</button>
+					</Button>
 				</div>
 
 			<!-- Step: error -->
@@ -402,7 +399,7 @@
 				<div class="space-y-4">
 					<div class="flex items-center gap-3">
 						<span class="text-2xl">❌</span>
-						<p class="text-sm font-semibold text-red-700">
+						<p class="text-sm font-semibold text-danger">
 							Error configurando {domainInput.trim()}
 						</p>
 					</div>
@@ -418,12 +415,9 @@
 							</p>
 						</div>
 					{/if}
-					<button
-						onclick={reset}
-						class="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:border-gray-500 transition-colors"
-					>
+					<Button variant="secondary" onclick={reset}>
 						Intentar de nuevo
-					</button>
+					</Button>
 				</div>
 			{/if}
 

@@ -1,23 +1,18 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { isValidGa4Id, isValidRobots } from '$lib/metadata';
-import { logAudit } from '$lib/audit';
+import { logProjectAudit } from '$lib/audit';
+import { requireProject } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const [{ data: project }, { data: brand }] = await Promise.all([
-		locals.supabase
-			.from('projects')
-			.select('id, name, ga4_id, site_name, title_separator, default_robots, canonical_domain, twitter_handle')
-			.eq('id', params.id)
-			.single(),
+	const [project, { data: brand }] = await Promise.all([
+		requireProject(locals.supabase, params.id, 'id, name, ga4_id, site_name, title_separator, default_robots, canonical_domain, twitter_handle'),
 		locals.supabase
 			.from('brand_manuals')
 			.select('favicon_url, og_image_url')
 			.eq('project_id', params.id)
 			.single(),
 	]);
-
-	if (!project) error(404, 'Proyecto no encontrado.');
 
 	return { project, brand };
 };
@@ -38,12 +33,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { field: 'ga4', error: 'Error al guardar.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'update',
 			resourceType: 'settings',
 			resourceName: 'Configuración',
@@ -78,12 +68,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { field: 'site', error: 'Error al guardar.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'update',
 			resourceType: 'settings',
 			resourceName: 'Configuración',
@@ -105,12 +90,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { field: 'assets', error: 'Error al guardar.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'update',
 			resourceType: 'settings',
 			resourceName: 'Configuración',

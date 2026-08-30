@@ -58,54 +58,54 @@
 <svelte:head><title>{data.project.name} — Panel</title></svelte:head>
 
 <div class="space-y-8">
-	<div class="flex items-center gap-2 text-sm text-gray-500">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">{data.project.name}</span>
+		<span class="text-ink font-medium">{data.project.name}</span>
 	</div>
 
 	<div class="flex items-center justify-between flex-wrap gap-3">
-		<h1 class="text-xl font-semibold text-gray-900">{data.project.name}</h1>
+		<h1 class="text-xl font-semibold text-ink">{data.project.name}</h1>
 		<div class="flex items-center gap-2">
 			<a
 				href="/projects/{data.project.id}/pages"
-				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+				class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 			>
 				Páginas
 			</a>
 			<a
 				href="/projects/{data.project.id}/collections"
-				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+				class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 			>
 				Colecciones
 			</a>
 			<a
 				href="/projects/{data.project.id}/assets"
-				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+				class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 			>
 				Assets
 			</a>
 			<a
 				href="/projects/{data.project.id}/brand"
-				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+				class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 			>
 				Marca
 			</a>
 			<a
 				href="/projects/{data.project.id}/template"
-				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+				class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 			>
 				Plantilla
 			</a>
 			<a
 				href="/projects/{data.project.id}/domains"
-				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+				class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 			>
 				Dominios
 			</a>
 			<a
 				href="/projects/{data.project.id}/settings"
-				class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+				class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 			>
 				Configuración
 			</a>
@@ -114,18 +114,18 @@
 
 	<!-- Dominios -->
 	<section>
-		<h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Dominios</h2>
+		<h2 class="text-sm font-semibold text-body uppercase tracking-wide mb-3">Dominios</h2>
 		{#if data.domains.length === 0}
-			<p class="text-sm text-gray-500">Sin dominios configurados.</p>
+			<p class="text-sm text-subtle">Sin dominios configurados.</p>
 		{:else}
-			<ul class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-lg">
+			<ul class="divide-y divide-border-faint bg-white border border-border-subtle rounded-lg">
 				{#each data.domains as domain (domain.id)}
 					<li class="px-4 py-3 flex items-center justify-between">
 						<span class="text-sm text-gray-800 font-mono">{domain.domain}</span>
 						<span
 							class="text-xs px-2 py-0.5 rounded-full {domain.is_active
-								? 'bg-green-50 text-green-700'
-								: 'bg-gray-100 text-gray-500'}"
+								? 'bg-green-50 text-success'
+								: 'bg-surface-muted-strong text-subtle'}"
 						>
 							{domain.is_active ? 'Activo' : 'Inactivo'}
 						</span>
@@ -137,15 +137,15 @@
 
 	<!-- Miembros -->
 	<section>
-		<h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Miembros</h2>
+		<h2 class="text-sm font-semibold text-body uppercase tracking-wide mb-3">Miembros</h2>
 		{#if data.members.length === 0}
-			<p class="text-sm text-gray-500">Sin miembros.</p>
+			<p class="text-sm text-subtle">Sin miembros.</p>
 		{:else}
-			<ul class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-lg">
+			<ul class="divide-y divide-border-faint bg-white border border-border-subtle rounded-lg">
 				{#each data.members as member (member.user_id)}
 					<li class="px-4 py-3 flex items-center justify-between">
 						<span class="text-sm text-gray-800">{member.display_name}</span>
-						<span class="text-xs text-gray-600 capitalize">{member.role_name}</span>
+						<span class="text-xs text-muted capitalize">{member.role_name}</span>
 					</li>
 				{/each}
 			</ul>
@@ -154,10 +154,10 @@
 
 	<!-- Registro de actividad -->
 	<section>
-		<h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+		<h2 class="text-sm font-semibold text-body uppercase tracking-wide mb-3">
 			Registro de actividad
 			{#if data.logTotal > 0}
-				<span class="ml-2 text-xs font-normal text-gray-400 normal-case">
+				<span class="ml-2 text-xs font-normal text-faint normal-case">
 					{data.logTotal} {data.logTotal === 1 ? 'evento' : 'eventos'}
 				</span>
 			{/if}
@@ -170,8 +170,8 @@
 					href={filterHref(f.value)}
 					class="px-3 py-1 text-xs rounded-full border transition-colors
 						{data.logType === f.value
-							? 'bg-blue-600 text-white border-blue-600'
-							: 'border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'}"
+							? 'bg-primary text-white border-primary'
+							: 'border-border-subtle text-muted hover:border-faint hover:text-ink'}"
 				>
 					{f.label}
 				</a>
@@ -179,13 +179,13 @@
 		</div>
 
 		{#if data.logs.length === 0}
-			<div class="bg-white border border-gray-200 rounded-lg p-8 text-center">
-				<p class="text-sm text-gray-400">No hay registros de actividad aún.</p>
+			<div class="bg-white border border-border-subtle rounded-lg p-8 text-center">
+				<p class="text-sm text-faint">No hay registros de actividad aún.</p>
 			</div>
 		{:else}
-			<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+			<div class="bg-white border border-border-subtle rounded-lg overflow-hidden">
 				<!-- Header de tabla -->
-				<div class="hidden md:grid grid-cols-[140px_1fr_1fr_100px_60px] gap-3 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wide">
+				<div class="hidden md:grid grid-cols-[140px_1fr_1fr_100px_60px] gap-3 px-4 py-2 bg-surface-muted border-b border-border-faint text-xs font-medium text-subtle uppercase tracking-wide">
 					<span>Fecha</span>
 					<span>Actor / Acción</span>
 					<span>Recurso</span>
@@ -193,33 +193,33 @@
 					<span>Estado</span>
 				</div>
 
-				<div class="divide-y divide-gray-100">
+				<div class="divide-y divide-border-faint">
 					{#each data.logs as log (log.id)}
 						<div class="px-4 py-3 grid md:grid-cols-[140px_1fr_1fr_100px_60px] gap-1 md:gap-3 items-start">
 							<!-- Fecha -->
-							<span class="text-xs text-gray-400 font-mono whitespace-nowrap">
+							<span class="text-xs text-faint font-mono whitespace-nowrap">
 								{formatDate(log.created_at)}
 							</span>
 
 							<!-- Actor / Acción -->
 							<div class="min-w-0">
-								<span class="text-xs font-medium text-gray-700 block truncate">
+								<span class="text-xs font-medium text-body block truncate">
 									{ACTION_LABELS[log.action] ?? log.action}
 								</span>
 								{#if log.actor === 'system'}
-									<span class="text-xs text-gray-400 italic">sistema</span>
+									<span class="text-xs text-faint italic">sistema</span>
 								{:else}
-									<span class="text-xs text-gray-400 truncate block">{log.actor}</span>
+									<span class="text-xs text-faint truncate block">{log.actor}</span>
 								{/if}
 							</div>
 
 							<!-- Recurso -->
 							<div class="min-w-0">
-								<span class="text-xs text-gray-500">
+								<span class="text-xs text-subtle">
 									{RESOURCE_LABELS[log.resource_type] ?? log.resource_type}
 								</span>
 								{#if log.resource_name}
-									<span class="text-xs text-gray-700 block truncate">{log.resource_name}</span>
+									<span class="text-xs text-body block truncate">{log.resource_name}</span>
 								{/if}
 							</div>
 
@@ -227,7 +227,7 @@
 							<div class="flex flex-wrap gap-1">
 								{#if log.changed}
 									{#each log.changed as field}
-										<span class="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-mono">{field}</span>
+										<span class="text-xs px-1.5 py-0.5 bg-surface-muted-strong text-muted rounded font-mono">{field}</span>
 									{/each}
 								{/if}
 							</div>
@@ -236,8 +236,8 @@
 							<span
 								class="text-xs px-2 py-0.5 rounded-full font-medium self-start
 									{log.status === 'error'
-										? 'bg-red-50 text-red-600'
-										: 'bg-green-50 text-green-700'}"
+										? 'bg-red-50 text-danger'
+										: 'bg-green-50 text-success'}"
 								title={log.error_message ?? ''}
 							>
 								{log.status === 'error' ? 'Error' : 'OK'}
@@ -252,25 +252,25 @@
 				<div class="flex items-center justify-between mt-3">
 					<a
 						href={filterHref(data.logType, data.logPage - 1)}
-						class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 transition-colors
+						class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-muted transition-colors
 							{data.logPage <= 1
 								? 'pointer-events-none opacity-40'
-								: 'hover:border-gray-400 hover:text-gray-900'}"
+								: 'hover:border-faint hover:text-ink'}"
 						aria-disabled={data.logPage <= 1}
 					>
 						← Anterior
 					</a>
 
-					<span class="text-xs text-gray-500">
+					<span class="text-xs text-subtle">
 						Página {data.logPage} de {data.logTotalPages}
 					</span>
 
 					<a
 						href={filterHref(data.logType, data.logPage + 1)}
-						class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 transition-colors
+						class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-muted transition-colors
 							{data.logPage >= data.logTotalPages
 								? 'pointer-events-none opacity-40'
-								: 'hover:border-gray-400 hover:text-gray-900'}"
+								: 'hover:border-faint hover:text-ink'}"
 						aria-disabled={data.logPage >= data.logTotalPages}
 					>
 						Siguiente →

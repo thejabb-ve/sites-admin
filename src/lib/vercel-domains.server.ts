@@ -9,6 +9,32 @@ function vercelHeaders() {
 	};
 }
 
+/**
+ * fetch a la API de Vercel; lanza si la respuesta no es `ok` y su status no está en `okStatuses`.
+ * Con `parseJson: false` no intenta leer el cuerpo (necesario en DELETE, cuyo cuerpo puede venir vacío).
+ */
+async function vercelRequest<T = void>(
+	path: string,
+	init: RequestInit | undefined,
+	errPrefix: string,
+	opts: { okStatuses?: number[]; parseJson?: boolean } = {},
+): Promise<T> {
+	const { okStatuses = [], parseJson = true } = opts;
+	const res = await fetch(`${VERCEL_API}${path}`, { ...init, headers: vercelHeaders() });
+	const ok  = res.ok || okStatuses.includes(res.status);
+
+	if (!parseJson) {
+		if (!ok) throw new Error(`${errPrefix}: ${res.statusText}`);
+		return undefined as T;
+	}
+
+	if (!ok) {
+		const errJson = await res.json().catch(() => null) as { error?: { message?: string } } | null;
+		throw new Error(`${errPrefix}: ${errJson?.error?.message ?? res.statusText}`);
+	}
+	return (await res.json()) as T;
+}
+
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
 export interface VercelDomainResult {
@@ -67,41 +93,28 @@ type VercelDomainRaw = {
 };
 
 async function _addSingleDomain(domain: string): Promise<VercelDomainRaw> {
-	const res  = await fetch(
-		`${VERCEL_API}/v10/projects/${VERCEL_PROJECT_ID}/domains`,
-		{
-			method:  'POST',
-			headers: vercelHeaders(),
-			body:    JSON.stringify({ name: domain }),
-		},
-	);
-	const json = (await res.json()) as VercelDomainRaw;
-
 	// 409 = dominio ya añadido al proyecto → no es error
-	if (res.status === 409) return json;
-
-	if (!res.ok) {
-		throw new Error(`Vercel addDomain(${domain}): ${json.error?.message ?? res.statusText}`);
-	}
-	return json;
+	return vercelRequest<VercelDomainRaw>(
+		`/v10/projects/${VERCEL_PROJECT_ID}/domains`,
+		{ method: 'POST', body: JSON.stringify({ name: domain }) },
+		`Vercel addDomain(${domain})`,
+		{ okStatuses: [409] },
+	);
 }
 
 // ── Consultar estado del dominio ──────────────────────────────────────────────
 
 export async function getDomainInfo(domain: string): Promise<VercelDomainResult> {
-	const res  = await fetch(
-		`${VERCEL_API}/v10/projects/${VERCEL_PROJECT_ID}/domains/${domain}`,
-		{ headers: vercelHeaders() },
-	);
-	if (!res.ok) {
-		throw new Error(`Vercel getDomainInfo(${domain}): ${res.statusText}`);
-	}
-	const json = (await res.json()) as {
+	const json = await vercelRequest<{
 		name?: string;
 		apexName?: string;
 		verified?: boolean;
 		verification?: VercelVerification[];
-	};
+	}>(
+		`/v10/projects/${VERCEL_PROJECT_ID}/domains/${domain}`,
+		undefined,
+		`Vercel getDomainInfo(${domain})`,
+	);
 	return {
 		name:         json.name         ?? domain,
 		apexName:     json.apexName     ?? domain,
@@ -122,12 +135,11 @@ export async function removeDomainFromProject(domain: string): Promise<void> {
 }
 
 async function _removeSingleDomain(domain: string): Promise<void> {
-	const res = await fetch(
-		`${VERCEL_API}/v10/projects/${VERCEL_PROJECT_ID}/domains/${domain}`,
-		{ method: 'DELETE', headers: vercelHeaders() },
-	);
 	// 404 = ya no estaba registrado → no es error
-	if (!res.ok && res.status !== 404) {
-		throw new Error(`Vercel removeDomain(${domain}): ${res.statusText}`);
-	}
+	await vercelRequest(
+		`/v10/projects/${VERCEL_PROJECT_ID}/domains/${domain}`,
+		{ method: 'DELETE' },
+		`Vercel removeDomain(${domain})`,
+		{ okStatuses: [404], parseJson: false },
+	);
 }

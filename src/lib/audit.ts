@@ -66,3 +66,19 @@ export async function logAudit({
 		// Never throw — logging must not interrupt the main flow
 	}
 }
+
+/** Resuelve la sesión actual y delega en logAudit — evita repetir safeGetSession() en cada action. */
+export async function logProjectAudit(
+	locals: App.Locals,
+	projectId: string,
+	params: Omit<AuditParams, 'supabase' | 'projectId' | 'userId' | 'actor'>,
+): Promise<void> {
+	const { user } = await locals.safeGetSession();
+	await logAudit({
+		supabase: locals.supabase,
+		projectId,
+		userId: user?.id ?? null,
+		actor: user?.email ?? 'desconocido',
+		...params,
+	});
+}

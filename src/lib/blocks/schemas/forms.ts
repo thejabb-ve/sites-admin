@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { OptionalHeadingSchema } from '../shared/schemas';
 
 const SAFE_FIELD_NAME = /^[a-z][a-z0-9_]*$/;
 
@@ -13,7 +14,7 @@ export const FormFieldSchema = z.object({
 });
 
 export const FormPropsSchema = z.object({
-  heading:           z.string().optional(),
+  heading:           OptionalHeadingSchema,
   fields:            z.array(FormFieldSchema).min(1),
   submitLabel:       z.string().default('Enviar'),
   action:            z.string().regex(/^[a-z][a-z0-9_-]*$/, {
@@ -25,6 +26,3 @@ export const FormPropsSchema = z.object({
   selectPlaceholder: z.string().default('Seleccionar...'),
   submittingLabel:   z.string().default('Enviando…'),
 });
-
-export type FormProps  = z.infer<typeof FormPropsSchema>;
-export type FormField  = z.infer<typeof FormFieldSchema>;

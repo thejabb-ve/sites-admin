@@ -1,12 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-
-	export interface FontSpec {
-		family:  string;
-		weights: number[];
-		source:  'google' | 'system' | 'custom';
-		urls?:   { weight: number; style?: string; url: string }[];
-	}
+	import type { FontSpec } from '$lib/types';
 
 	interface Props {
 		value:    FontSpec;
@@ -120,7 +114,7 @@
 <div class="space-y-3">
 	<!-- Preview de fuente en vivo -->
 	{#if family}
-		<div class="bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
+		<div class="bg-surface-muted rounded-md px-4 py-3 border border-border-faint">
 			<p
 				class="text-gray-800 leading-snug"
 				style="font-family: '{family}', sans-serif; font-size: 22px;"
@@ -128,7 +122,7 @@
 				Aa — Ejemplo 123
 			</p>
 			<p
-				class="text-gray-500 mt-1"
+				class="text-subtle mt-1"
 				style="font-family: '{family}', sans-serif; font-size: 13px;"
 			>
 				El zorro marrón salta sobre el perro perezoso.
@@ -138,7 +132,7 @@
 
 	<!-- familia -->
 	<div>
-		<label for="fs-family-{uid}" class="block text-xs font-medium text-gray-600 mb-1">Familia</label>
+		<label for="fs-family-{uid}" class="block text-xs font-medium text-muted mb-1">Familia</label>
 		{#if datalistId}
 			<datalist id={datalistId}>
 				{#each fontListData as f (f)}
@@ -154,18 +148,18 @@
 			list={datalistId}
 			placeholder="Inter"
 			autocomplete="off"
-			class="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+			class="w-full border border-border rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 		/>
 	</div>
 
 	<!-- source -->
 	<div>
-		<label for="fs-source-{uid}" class="block text-xs font-medium text-gray-600 mb-1">Origen</label>
+		<label for="fs-source-{uid}" class="block text-xs font-medium text-muted mb-1">Origen</label>
 		<select
 			id="fs-source-{uid}"
 			bind:value={source}
 			onchange={emit}
-			class="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+			class="w-full border border-border rounded-md px-3 py-1.5 text-sm"
 		>
 			<option value="google">Google Fonts</option>
 			<option value="system">Fuente del sistema</option>
@@ -175,14 +169,14 @@
 
 	<!-- weights -->
 	<div>
-		<label for="fs-weights-{uid}" class="block text-xs font-medium text-gray-600 mb-1">Pesos (uno por línea)</label>
+		<label for="fs-weights-{uid}" class="block text-xs font-medium text-muted mb-1">Pesos (uno por línea)</label>
 		<textarea
 			id="fs-weights-{uid}"
 			bind:value={weightsText}
 			oninput={emit}
 			rows="3"
 			placeholder="400&#10;500&#10;700"
-			class="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm font-mono resize-y"
+			class="w-full border border-border rounded-md px-3 py-1.5 text-sm font-mono resize-y"
 		></textarea>
 	</div>
 
@@ -190,11 +184,11 @@
 	{#if source === 'custom'}
 		<div>
 			<div class="flex items-center justify-between mb-2">
-				<span class="text-xs font-medium text-gray-600">URLs de fuente</span>
+				<span class="text-xs font-medium text-muted">URLs de fuente</span>
 				<button
 					type="button"
 					onclick={addUrl}
-					class="text-xs text-blue-600 hover:text-blue-800"
+					class="text-xs text-primary hover:text-blue-800"
 				>+ Añadir</button>
 			</div>
 			{#each urls as u, i (i)}
@@ -204,7 +198,7 @@
 						value={u.weight}
 						oninput={(e) => updateUrl(i, 'weight', parseInt((e.target as HTMLInputElement).value, 10))}
 						aria-label="Peso de fuente"
-						class="w-20 border border-gray-300 rounded-md px-2 py-1 text-xs"
+						class="w-20 border border-border rounded-md px-2 py-1 text-xs"
 						placeholder="400"
 					/>
 					<input
@@ -212,7 +206,7 @@
 						value={u.style}
 						oninput={(e) => updateUrl(i, 'style', (e.target as HTMLInputElement).value)}
 						aria-label="Estilo de fuente"
-						class="w-20 border border-gray-300 rounded-md px-2 py-1 text-xs"
+						class="w-20 border border-border rounded-md px-2 py-1 text-xs"
 						placeholder="normal"
 					/>
 					<input
@@ -220,13 +214,14 @@
 						value={u.url}
 						oninput={(e) => updateUrl(i, 'url', (e.target as HTMLInputElement).value)}
 						aria-label="URL de fuente"
-						class="flex-1 border border-gray-300 rounded-md px-2 py-1 text-xs font-mono"
+						class="flex-1 border border-border rounded-md px-2 py-1 text-xs font-mono"
 						placeholder="https://..."
 					/>
 					<button
 						type="button"
 						onclick={() => removeUrl(i)}
-						class="text-gray-400 hover:text-red-500 px-1 py-1 text-sm"
+						aria-label="Eliminar fuente"
+						class="text-faint hover:text-danger px-1 py-1 text-sm"
 					>✕</button>
 				</div>
 			{/each}

@@ -1,30 +1,26 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { isValidSlug } from '$lib/metadata';
-import { logAudit } from '$lib/audit';
+import { isValidSlug, isValidFullPath } from '$lib/metadata';
+import { logProjectAudit } from '$lib/audit';
+import { requireProject } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name')
-		.eq('id', params.id)
-		.single();
-	if (!project) error(404, 'Proyecto no encontrado.');
-
-	const { data: collection } = await locals.supabase
-		.from('collections')
-		.select('id, name, slug, schema')
-		.eq('id', params.collectionId)
-		.eq('project_id', params.id)
-		.single();
+	const [project, { data: collection }, { data: item }] = await Promise.all([
+		requireProject(locals.supabase, params.id, 'id, name'),
+		locals.supabase
+			.from('collections')
+			.select('id, name, slug, schema')
+			.eq('id', params.collectionId)
+			.eq('project_id', params.id)
+			.single(),
+		locals.supabase
+			.from('collection_items')
+			.select('*')
+			.eq('id', params.itemId)
+			.eq('project_id', params.id)
+			.single(),
+	]);
 	if (!collection) error(404, 'Colección no encontrada.');
-
-	const { data: item } = await locals.supabase
-		.from('collection_items')
-		.select('*')
-		.eq('id', params.itemId)
-		.eq('project_id', params.id)
-		.single();
 	if (!item) error(404, 'Ítem no encontrado.');
 
 	return { project, collection, item };
@@ -46,17 +42,22 @@ export const actions: Actions = {
 		if (!['draft', 'published'].includes(status)) {
 			return fail(400, { error: 'Estado inválido.' });
 		}
+		if (!isValidFullPath(fullPath)) {
+			return fail(400, { error: 'La URL completa debe ser una ruta válida (ej. /modelo/es/comite).' });
+		}
 
 		const { data: collection } = await locals.supabase
 			.from('collections')
 			.select('schema')
 			.eq('id', params.collectionId)
+			.eq('project_id', params.id)
 			.single();
 
 		const { data: currentItem } = await locals.supabase
 			.from('collection_items')
 			.select('fields')
 			.eq('id', params.itemId)
+			.eq('project_id', params.id)
 			.single();
 
 		const schema = collection?.schema as {
@@ -90,12 +91,7 @@ export const actions: Actions = {
 			return fail(500, { error: 'Error al guardar los cambios.' });
 		}
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase:     locals.supabase,
-			projectId:    params.id,
-			userId:       user?.id ?? null,
-			actor:        user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action:       'update',
 			resourceType: 'collection_item',
 			resourceId:   params.itemId,

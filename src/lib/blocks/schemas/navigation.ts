@@ -1,15 +1,11 @@
 import { z } from 'zod/v4';
-
-const SubNavLinkSchema = z.object({
-  label: z.string(),
-  href:  z.string(),
-});
+import { LinkSchema } from '../shared/schemas';
 
 const NavLinkSchema = z.object({
   label:    z.string(),
   href:     z.string(),
   external: z.boolean().optional(),
-  subMenu:  z.array(SubNavLinkSchema).optional(),
+  subMenu:  z.array(LinkSchema).optional(),
 });
 
 export const HeaderPropsSchema = z.object({
@@ -29,12 +25,9 @@ export const FooterPropsSchema = z.object({
   columns:    z.array(FooterColumnSchema).default([]),
   legal:      z.string().optional(),
   address:    z.string().optional(),
-  legalLinks: z.array(z.object({ label: z.string(), href: z.string() })).optional(),
+  legalLinks: z.array(LinkSchema).optional(),
   socials:    z.array(z.object({
     platform: z.enum(['twitter', 'instagram', 'linkedin', 'github', 'youtube', 'facebook']),
     href:     z.string(),
   })).optional(),
 });
-
-export type HeaderProps = z.infer<typeof HeaderPropsSchema>;
-export type FooterProps = z.infer<typeof FooterPropsSchema>;

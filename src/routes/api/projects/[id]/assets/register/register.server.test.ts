@@ -29,15 +29,21 @@ const VALID_BODY = {
 
 const mockInsertSingle = mock(() => Promise.resolve({ data: ASSET, error: null }));
 
-function makeSupabase() {
+/** Router mínimo de Supabase: `projects` resuelve el chequeo de existencia, `assets` usa `onInsert`. */
+function makeSupabase(onInsert: (data: unknown) => Promise<{ data: unknown; error: unknown }> = mockInsertSingle) {
 	return {
-		from: () => ({
-			insert: () => ({
-				select: () => ({
-					single: mockInsertSingle,
+		from: (table: string) => {
+			if (table === 'projects') {
+				return { select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: { id: 'proj-1' } }) }) }) };
+			}
+			return {
+				insert: (data: unknown) => ({
+					select: () => ({
+						single: () => onInsert(data),
+					}),
 				}),
-			}),
-		}),
+			};
+		},
 	};
 }
 
@@ -143,14 +149,7 @@ describe('POST /assets/register — Supabase', () => {
 	it('usa "video/mp4" como mime_type por defecto si no se envía', async () => {
 		const { mime_type: _, ...rest } = VALID_BODY;
 		let capturedInsert: unknown;
-		const supabase = {
-			from: () => ({
-				insert: (data: unknown) => {
-					capturedInsert = data;
-					return { select: () => ({ single: () => Promise.resolve({ data: ASSET, error: null }) }) };
-				},
-			}),
-		};
+		const supabase = makeSupabase(async (data) => { capturedInsert = data; return { data: ASSET, error: null }; });
 		const event = {
 			...makeEvent({ body: rest }),
 			locals: {
@@ -165,14 +164,7 @@ describe('POST /assets/register — Supabase', () => {
 	it('usa 0 como size_bytes por defecto si no se envía', async () => {
 		const { size_bytes: _, ...rest } = VALID_BODY;
 		let capturedInsert: unknown;
-		const supabase = {
-			from: () => ({
-				insert: (data: unknown) => {
-					capturedInsert = data;
-					return { select: () => ({ single: () => Promise.resolve({ data: ASSET, error: null }) }) };
-				},
-			}),
-		};
+		const supabase = makeSupabase(async (data) => { capturedInsert = data; return { data: ASSET, error: null }; });
 		const event = {
 			...makeEvent({ body: rest }),
 			locals: {
@@ -186,14 +178,7 @@ describe('POST /assets/register — Supabase', () => {
 
 	it('inserta original_key y original_url iguales a key y url', async () => {
 		let capturedInsert: unknown;
-		const supabase = {
-			from: () => ({
-				insert: (data: unknown) => {
-					capturedInsert = data;
-					return { select: () => ({ single: () => Promise.resolve({ data: ASSET, error: null }) }) };
-				},
-			}),
-		};
+		const supabase = makeSupabase(async (data) => { capturedInsert = data; return { data: ASSET, error: null }; });
 		const event = {
 			...makeEvent(),
 			locals: {
@@ -209,14 +194,7 @@ describe('POST /assets/register — Supabase', () => {
 
 	it('inserta con project_id del param, no del body', async () => {
 		let capturedInsert: unknown;
-		const supabase = {
-			from: () => ({
-				insert: (data: unknown) => {
-					capturedInsert = data;
-					return { select: () => ({ single: () => Promise.resolve({ data: ASSET, error: null }) }) };
-				},
-			}),
-		};
+		const supabase = makeSupabase(async (data) => { capturedInsert = data; return { data: ASSET, error: null }; });
 		const event = {
 			...makeEvent({ projectId: 'proj-42' }),
 			locals: {
@@ -226,5 +204,11 @@ describe('POST /assets/register — Supabase', () => {
 		} as never;
 		await POST(event);
 		expect((capturedInsert as Record<string, unknown>).project_id).toBe('proj-42');
+	});
+
+	it('devuelve 400 si la url no pertenece al host del CDN propio', async () => {
+		const res = await POST(makeEvent({ body: { ...VALID_BODY, url: 'https://evil.example.com/video.mp4' } }));
+		expect(res.status).toBe(400);
+		expect((await res.json()).error).toMatch(/cdn/i);
 	});
 });

@@ -1,8 +1,12 @@
 import { describe, it, expect, mock, beforeEach } from 'bun:test';
+import * as sveltekit from '@sveltejs/kit';
 
 // ─── Mocks de módulos ────────────────────────────────────────────────────────
+// Se preserva el resto del módulo real (json, redirect, ...) para no romper
+// otros test files que importan @sveltejs/kit en la misma corrida de `bun test src`.
 
 mock.module('@sveltejs/kit', () => ({
+	...sveltekit,
 	error: (status: number, msg: string) => {
 		throw Object.assign(new Error(msg), { status });
 	},

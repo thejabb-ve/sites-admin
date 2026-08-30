@@ -1,13 +1,7 @@
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { checkAvailability } from '$lib/cloudflare-registrar.server';
 import { startDomainSetup, disconnectDomain } from '$lib/domain-setup.server';
-
-function json(data: unknown, status = 200) {
-	return new Response(JSON.stringify(data), {
-		status,
-		headers: { 'Content-Type': 'application/json' },
-	});
-}
 
 function isValidDomain(domain: string): boolean {
 	return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/.test(domain.toLowerCase());
@@ -17,18 +11,18 @@ function isValidDomain(domain: string): boolean {
 // GET ?statusOf=domainId → estado actual del dominio (para polling del wizard)
 export const GET: RequestHandler = async ({ url, params, locals }) => {
 	const { user } = await locals.safeGetSession();
-	if (!user) return json({ error: 'No autenticado' }, 401);
+	if (!user) return json({ error: 'No autenticado' }, { status: 401 });
 
 	const checkDomain = url.searchParams.get('check');
 	if (checkDomain) {
 		if (!isValidDomain(checkDomain)) {
-			return json({ error: 'Formato de dominio inválido.' }, 400);
+			return json({ error: 'Formato de dominio inválido.' }, { status: 400 });
 		}
 		try {
 			const availability = await checkAvailability(checkDomain);
 			return json(availability);
 		} catch (err) {
-			return json({ error: err instanceof Error ? err.message : 'Error desconocido' }, 502);
+			return json({ error: err instanceof Error ? err.message : 'Error desconocido' }, { status: 502 });
 		}
 	}
 
@@ -40,37 +34,37 @@ export const GET: RequestHandler = async ({ url, params, locals }) => {
 			.eq('id', domainId)
 			.eq('project_id', params.id)
 			.single();
-		if (!domain) return json({ error: 'Dominio no encontrado' }, 404);
+		if (!domain) return json({ error: 'Dominio no encontrado' }, { status: 404 });
 		return json(domain);
 	}
 
-	return json({ error: 'Parámetro requerido: check o statusOf' }, 400);
+	return json({ error: 'Parámetro requerido: check o statusOf' }, { status: 400 });
 };
 
 // POST { domain, existingZoneId? }
 // → inserta el dominio en DB y lanza la configuración en background
 export const POST: RequestHandler = async ({ request, params, locals }) => {
 	const { user } = await locals.safeGetSession();
-	if (!user) return json({ error: 'No autenticado' }, 401);
+	if (!user) return json({ error: 'No autenticado' }, { status: 401 });
 
 	const { data: project } = await locals.supabase
 		.from('projects')
 		.select('id, name')
 		.eq('id', params.id)
 		.single();
-	if (!project) return json({ error: 'Proyecto no encontrado' }, 404);
+	if (!project) return json({ error: 'Proyecto no encontrado' }, { status: 404 });
 
 	let body: { domain?: string; existingZoneId?: string };
 	try {
 		body = await request.json() as typeof body;
 	} catch {
-		return json({ error: 'Cuerpo JSON inválido' }, 400);
+		return json({ error: 'Cuerpo JSON inválido' }, { status: 400 });
 	}
 
 	const domain = String(body.domain ?? '').trim().toLowerCase();
 
 	if (!isValidDomain(domain)) {
-		return json({ error: 'Formato de dominio inválido.' }, 400);
+		return json({ error: 'Formato de dominio inválido.' }, { status: 400 });
 	}
 
 	// Comprobar que no existe ya en el proyecto
@@ -81,7 +75,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		.eq('domain', domain)
 		.maybeSingle();
 
-	if (existing) return json({ error: `El dominio ${domain} ya está registrado en este proyecto.` }, 409);
+	if (existing) return json({ error: `El dominio ${domain} ya está registrado en este proyecto.` }, { status: 409 });
 
 	// Insertar en DB con status='pending'
 	const { data: inserted, error: dbErr } = await locals.supabase
@@ -91,7 +85,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		.single();
 
 	if (dbErr || !inserted) {
-		return json({ error: 'Error al registrar el dominio.' }, 500);
+		return json({ error: 'Error al registrar el dominio.' }, { status: 500 });
 	}
 
 	// Lanzar configuración en background (no bloquea esta respuesta)
@@ -108,23 +102,23 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		locals.supabase,
 	);
 
-	return json({ ok: true, domainId: inserted.id }, 201);
+	return json({ ok: true, domainId: inserted.id }, { status: 201 });
 };
 
 // DELETE { domainId }
 export const DELETE: RequestHandler = async ({ request, params, locals }) => {
 	const { user } = await locals.safeGetSession();
-	if (!user) return json({ error: 'No autenticado' }, 401);
+	if (!user) return json({ error: 'No autenticado' }, { status: 401 });
 
 	let body: { domainId?: string };
 	try {
 		body = await request.json() as typeof body;
 	} catch {
-		return json({ error: 'Cuerpo JSON inválido' }, 400);
+		return json({ error: 'Cuerpo JSON inválido' }, { status: 400 });
 	}
 
 	const domainId = String(body.domainId ?? '').trim();
-	if (!domainId) return json({ error: 'domainId requerido' }, 400);
+	if (!domainId) return json({ error: 'domainId requerido' }, { status: 400 });
 
 	// Verificar que el dominio pertenece al proyecto
 	const { data: domain } = await locals.supabase
@@ -134,7 +128,7 @@ export const DELETE: RequestHandler = async ({ request, params, locals }) => {
 		.eq('project_id', params.id)
 		.single();
 
-	if (!domain) return json({ error: 'Dominio no encontrado' }, 404);
+	if (!domain) return json({ error: 'Dominio no encontrado' }, { status: 404 });
 
 	await disconnectDomain(
 		domainId,
@@ -148,4 +142,4 @@ export const DELETE: RequestHandler = async ({ request, params, locals }) => {
 	return json({ ok: true });
 };
 
-export const fallback: RequestHandler = () => json({ error: 'Método no permitido' }, 405);
+export const fallback: RequestHandler = () => json({ error: 'Método no permitido' }, { status: 405 });

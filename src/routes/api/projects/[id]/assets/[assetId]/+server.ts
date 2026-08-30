@@ -1,8 +1,12 @@
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { CDN_WORKER_URL, CDN_UPLOAD_SECRET } from '$env/static/private';
 import { logAudit } from '$lib/audit';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
+	const { user } = await locals.safeGetSession();
+	if (!user) return json({ error: 'No autenticado' }, { status: 401 });
+
 	const { data: asset } = await locals.supabase
 		.from('assets')
 		.select('id, key, url, thumb_url, filename, mime_type, size_bytes, created_at')
@@ -10,13 +14,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		.eq('project_id', params.id)
 		.single();
 
-	if (!asset) return json({ error: 'Asset no encontrado' }, 404);
+	if (!asset) return json({ error: 'Asset no encontrado' }, { status: 404 });
 	return json({ asset });
 };
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const { user } = await locals.safeGetSession();
-	if (!user) return json({ error: 'No autenticado' }, 401);
+	if (!user) return json({ error: 'No autenticado' }, { status: 401 });
 
 	const { data: asset } = await locals.supabase
 		.from('assets')
@@ -25,7 +29,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		.eq('project_id', params.id)
 		.single();
 
-	if (!asset) return json({ error: 'Asset no encontrado' }, 404);
+	if (!asset) return json({ error: 'Asset no encontrado' }, { status: 404 });
 
 	// Eliminar todas las keys no-null del CDN en paralelo
 	const keys = [asset.key, asset.original_key, asset.cluster_key, asset.thumb_key]
@@ -58,7 +62,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
 	if (dbErr) {
 		console.error('[assets/delete] Supabase error:', dbErr.message);
-		return json({ error: 'Error eliminando asset de la base de datos' }, 500);
+		return json({ error: 'Error eliminando asset de la base de datos' }, { status: 500 });
 	}
 
 	await logAudit({
@@ -74,10 +78,3 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
 	return json({ ok: true });
 };
-
-function json(data: unknown, status = 200) {
-	return new Response(JSON.stringify(data), {
-		status,
-		headers: { 'Content-Type': 'application/json' },
-	});
-}

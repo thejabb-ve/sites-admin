@@ -5,15 +5,7 @@
 	import { ADMIN_BLOCK_REGISTRY } from '$lib/blocks/adminRegistry';
 	import BlockPropsPanel from './BlockPropsPanel.svelte';
 	import type { ActionResult } from '@sveltejs/kit';
-
-	type Block = {
-		id:              string;
-		type:            string;
-		order:           number;
-		props:           Record<string, unknown>;
-		version:         number;
-		parent_block_id?: string | null;
-	};
+	import type { Block } from '$lib/types';
 
 	let { serverBlocks }: { serverBlocks: Block[] } = $props();
 
@@ -34,12 +26,27 @@
 	let reorderFormEl    = $state<HTMLFormElement | undefined>();
 	let reorderIdsInput  = $state<HTMLInputElement | undefined>();
 
+	// IDs borrados de forma optimista, aún no confirmados por el round-trip de
+	// invalidateAll(). Sin excluirlos de la comparación de abajo, el resync
+	// revierte el borrado local hasta que `serverBlocks` se actualice.
+	let locallyDeletedIds = new Set<string>();
+
 	// Resync when a block is added/removed server-side (different set of IDs)
 	$effect(() => {
 		const serverIds = new Set(serverBlocks.map(b => b.id));
-		const localIds  = new Set(blocks.map(b => b.id));
-		const same = serverIds.size === localIds.size && [...serverIds].every(id => localIds.has(id));
-		if (!same) blocks = JSON.parse(JSON.stringify(serverBlocks)) as Block[];
+		const relevantServerIds = new Set([...serverIds].filter(id => !locallyDeletedIds.has(id)));
+		const localIds = new Set(blocks.map(b => b.id));
+		const same = relevantServerIds.size === localIds.size && [...relevantServerIds].every(id => localIds.has(id));
+		if (!same) {
+			// Filtrar locallyDeletedIds aquí también: un resync no relacionado (ej. otro bloque
+			// añadido desde otra pestaña) mientras un borrado sigue en vuelo no debe hacer
+			// reaparecer el bloque que el usuario acaba de borrar.
+			blocks = (JSON.parse(JSON.stringify(serverBlocks)) as Block[])
+				.filter(b => !locallyDeletedIds.has(b.id));
+		}
+		for (const id of [...locallyDeletedIds]) {
+			if (!serverIds.has(id)) locallyDeletedIds.delete(id);
+		}
 	});
 
 	// Actualizar input de reordenación usando solo bloques padre
@@ -109,12 +116,12 @@
 			class="bg-white border rounded-lg transition-colors
 				{dragOverIdx === i && dragIndex !== i
 					? 'border-blue-400 ring-1 ring-blue-400'
-					: 'border-gray-200'}"
+					: 'border-border-subtle'}"
 		>
 			<!-- Fila del bloque -->
 			<div class="px-4 py-3 flex items-center gap-3">
 				<span
-					class="text-gray-300 cursor-grab select-none text-lg leading-none"
+					class="text-faint cursor-grab select-none text-lg leading-none"
 					aria-hidden="true"
 				>⠿</span>
 
@@ -126,7 +133,7 @@
 					<button
 						type="button"
 						onclick={() => (editingId = editingId === block.id ? null : block.id)}
-						class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+						class="text-xs px-2 py-1 rounded border border-border-subtle text-muted hover:border-faint hover:text-ink transition-colors"
 					>
 						{editingId === block.id ? 'Cerrar' : 'Editar'}
 					</button>
@@ -139,7 +146,7 @@
 							await tick();
 							deleteFormEl?.requestSubmit();
 						}}
-						class="text-xs px-2 py-1 rounded border border-gray-200 text-red-500 hover:border-red-300 hover:text-red-700 transition-colors"
+						class="text-xs px-2 py-1 rounded border border-border-subtle text-danger hover:border-red-300 hover:text-danger-hover transition-colors"
 					>
 						✕
 					</button>
@@ -166,11 +173,11 @@
 					<div class="bg-white border border-blue-100 rounded-lg">
 						<div class="px-4 py-2 flex items-center gap-3">
 							<span class="text-xs text-blue-400">↳</span>
-							<span class="flex-1 text-sm text-gray-700 truncate">{getLabel(child.type)}</span>
+							<span class="flex-1 text-sm text-body truncate">{getLabel(child.type)}</span>
 							<button
 								type="button"
 								onclick={() => (editingId = editingId === child.id ? null : child.id)}
-								class="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-gray-400"
+								class="text-xs px-2 py-1 rounded border border-border-subtle text-muted hover:border-faint"
 							>
 								{editingId === child.id ? 'Cerrar' : 'Editar'}
 							</button>
@@ -194,8 +201,8 @@
 	{/each}
 
 	{#if parentBlocks.length === 0}
-		<div class="bg-white border border-dashed border-gray-300 rounded-lg p-10 text-center">
-			<p class="text-sm text-gray-400">Esta página no tiene bloques. Añade el primero.</p>
+		<div class="bg-white border border-dashed border-border rounded-lg p-10 text-center">
+			<p class="text-sm text-faint">Esta página no tiene bloques. Añade el primero.</p>
 		</div>
 	{/if}
 </div>
@@ -225,6 +232,7 @@
 		await update({ reset: false });
 		if (result.type === 'success') {
 			toast('success', 'Bloque eliminado.');
+			locallyDeletedIds.add(deletePendingId);
 			blocks = blocks.filter(b => b.id !== deletePendingId);
 		} else if (result.type === 'failure') {
 			toast('error', (result.data as Record<string, string>)?.error ?? 'Error al eliminar.');

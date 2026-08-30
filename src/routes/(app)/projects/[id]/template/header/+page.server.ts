@@ -1,16 +1,11 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { ADMIN_BLOCK_REGISTRY } from '$lib/blocks/adminRegistry';
-import { logAudit } from '$lib/audit';
+import { logProjectAudit } from '$lib/audit';
+import { requireProject } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-  const { data: project } = await locals.supabase
-    .from('projects')
-    .select('id, name, header_props')
-    .eq('id', params.id)
-    .single();
-
-  if (!project) error(404, 'Proyecto no encontrado.');
+  const project = await requireProject(locals.supabase, params.id, 'id, name, header_props');
 
   return { project };
 };
@@ -41,12 +36,7 @@ export const actions: Actions = {
 
     if (dbError) return fail(500, { error: 'Error al guardar el encabezado.' });
 
-    const { user } = await locals.safeGetSession();
-    await logAudit({
-      supabase: locals.supabase,
-      projectId: params.id,
-      userId: user?.id ?? null,
-      actor: user?.email ?? 'desconocido',
+    await logProjectAudit(locals, params.id, {
       action: 'update',
       resourceType: 'template',
       resourceName: 'Encabezado',

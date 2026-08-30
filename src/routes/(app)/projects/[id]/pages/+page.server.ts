@@ -1,16 +1,11 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { isValidSlug } from '$lib/metadata';
-import { logAudit } from '$lib/audit';
+import { logProjectAudit } from '$lib/audit';
+import { requireProject } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name, default_robots')
-		.eq('id', params.id)
-		.single();
-
-	if (!project) error(404, 'Proyecto no encontrado.');
+	const project = await requireProject(locals.supabase, params.id, 'id, name, default_robots');
 
 	const tab = url.searchParams.get('tab') === 'archived' ? 'archived' : 'active';
 
@@ -62,12 +57,7 @@ export const actions: Actions = {
 			return fail(500, { error: 'Error al crear la página.' });
 		}
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'create',
 			resourceType: 'page',
 			resourceId: newPage.id,
@@ -98,12 +88,7 @@ export const actions: Actions = {
 			return fail(500, { error: 'Error al renombrar.' });
 		}
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'update',
 			resourceType: 'page',
 			resourceId: pageId,
@@ -130,12 +115,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al cambiar estado.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: newStatus === 'published' ? 'publish' : 'update',
 			resourceType: 'page',
 			resourceId: pageId,
@@ -159,12 +139,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al archivar.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'archive',
 			resourceType: 'page',
 			resourceId: pageId,
@@ -187,12 +162,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al restaurar.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'restore',
 			resourceType: 'page',
 			resourceId: pageId,
@@ -226,12 +196,7 @@ export const actions: Actions = {
 
 		if (dbError) return fail(500, { error: 'Error al eliminar la página.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase: locals.supabase,
-			projectId: params.id,
-			userId: user?.id ?? null,
-			actor: user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action: 'delete',
 			resourceType: 'page',
 			resourceId: pageId,

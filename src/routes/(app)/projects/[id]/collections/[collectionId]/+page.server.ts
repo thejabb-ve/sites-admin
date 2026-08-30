@@ -1,29 +1,25 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { isValidSlug, slugify } from '$lib/metadata';
-import { logAudit } from '$lib/audit';
+import { logProjectAudit } from '$lib/audit';
+import { requireProject } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { data: project } = await locals.supabase
-		.from('projects')
-		.select('id, name')
-		.eq('id', params.id)
-		.single();
-	if (!project) error(404, 'Proyecto no encontrado.');
-
-	const { data: collection } = await locals.supabase
-		.from('collections')
-		.select('id, name, slug, schema')
-		.eq('id', params.collectionId)
-		.eq('project_id', params.id)
-		.single();
+	const [project, { data: collection }, { data: items }] = await Promise.all([
+		requireProject(locals.supabase, params.id, 'id, name'),
+		locals.supabase
+			.from('collections')
+			.select('id, name, slug, schema')
+			.eq('id', params.collectionId)
+			.eq('project_id', params.id)
+			.single(),
+		locals.supabase
+			.from('collection_items')
+			.select('id, title, slug, full_path, status, order, created_at')
+			.eq('collection_id', params.collectionId)
+			.order('order', { ascending: true }),
+	]);
 	if (!collection) error(404, 'Colección no encontrada.');
-
-	const { data: items } = await locals.supabase
-		.from('collection_items')
-		.select('id, title, slug, full_path, status, order, created_at')
-		.eq('collection_id', params.collectionId)
-		.order('order', { ascending: true });
 
 	return { project, collection, items: items ?? [] };
 };
@@ -43,6 +39,7 @@ export const actions: Actions = {
 			.from('collections')
 			.select('schema')
 			.eq('id', params.collectionId)
+			.eq('project_id', params.id)
 			.single();
 
 		const schema = collection?.schema as { base_path?: string; fields: unknown[] } | null;
@@ -78,12 +75,7 @@ export const actions: Actions = {
 			return fail(500, { error: 'Error al crear el ítem.' });
 		}
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase:     locals.supabase,
-			projectId:    params.id,
-			userId:       user?.id ?? null,
-			actor:        user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action:       'create',
 			resourceType: 'collection_item',
 			resourceId:   newItem.id,
@@ -107,16 +99,12 @@ export const actions: Actions = {
 			.from('collection_items')
 			.update({ status: newStatus })
 			.eq('id', itemId)
-			.eq('collection_id', params.collectionId);
+			.eq('collection_id', params.collectionId)
+			.eq('project_id', params.id);
 
 		if (dbError) return fail(500, { error: 'Error al cambiar estado.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase:     locals.supabase,
-			projectId:    params.id,
-			userId:       user?.id ?? null,
-			actor:        user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action:       newStatus === 'published' ? 'publish' : 'update',
 			resourceType: 'collection_item',
 			resourceId:   itemId,
@@ -136,16 +124,12 @@ export const actions: Actions = {
 			.from('collection_items')
 			.delete()
 			.eq('id', itemId)
-			.eq('collection_id', params.collectionId);
+			.eq('collection_id', params.collectionId)
+			.eq('project_id', params.id);
 
 		if (dbError) return fail(500, { error: 'Error al eliminar el ítem.' });
 
-		const { user } = await locals.safeGetSession();
-		await logAudit({
-			supabase:     locals.supabase,
-			projectId:    params.id,
-			userId:       user?.id ?? null,
-			actor:        user?.email ?? 'desconocido',
+		await logProjectAudit(locals, params.id, {
 			action:       'delete',
 			resourceType: 'collection_item',
 			resourceId:   itemId,

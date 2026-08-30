@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import type { PageData } from './$types';
 	import type { ActionResult } from '@sveltejs/kit';
 
@@ -36,46 +37,46 @@
 <svelte:head><title>{data.item.title} — {data.collection.name}</title></svelte:head>
 
 <div class="space-y-6">
-	<div class="flex items-center gap-2 text-sm text-gray-500">
-		<a href="/dashboard" class="hover:text-gray-900">Proyectos</a>
+	<div class="flex items-center gap-2 text-sm text-subtle">
+		<a href="/dashboard" class="hover:text-ink">Proyectos</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}" class="hover:text-gray-900">{data.project.name}</a>
+		<a href="/projects/{data.project.id}" class="hover:text-ink">{data.project.name}</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}/collections" class="hover:text-gray-900">Colecciones</a>
+		<a href="/projects/{data.project.id}/collections" class="hover:text-ink">Colecciones</a>
 		<span>/</span>
-		<a href="/projects/{data.project.id}/collections/{data.collection.id}" class="hover:text-gray-900">{data.collection.name}</a>
+		<a href="/projects/{data.project.id}/collections/{data.collection.id}" class="hover:text-ink">{data.collection.name}</a>
 		<span>/</span>
-		<span class="text-gray-900 font-medium">{data.item.title}</span>
+		<span class="text-ink font-medium">{data.item.title}</span>
 	</div>
 
 	<div class="flex items-center justify-between">
-		<h1 class="text-xl font-semibold text-gray-900">Editar ítem</h1>
+		<h1 class="text-xl font-semibold text-ink">Editar ítem</h1>
 		<a
 			href="/projects/{data.project.id}/collections/{data.collection.id}"
-			class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+			class="px-3 py-1.5 text-sm border border-border-subtle rounded-md text-body hover:border-faint hover:text-ink transition-colors"
 		>
 			← Volver
 		</a>
 	</div>
 
 	<form method="POST" action="?/update" use:enhance={withToast} class="space-y-6">
-		<div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
-			<h2 class="text-sm font-semibold text-gray-700">Campos base</h2>
+		<div class="bg-white border border-border-subtle rounded-lg p-5 space-y-4">
+			<h2 class="text-sm font-semibold text-body">Campos base</h2>
 
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="field-title">Título</label>
+				<label class="block text-xs text-muted mb-1" for="field-title">Título</label>
 				<input
 					id="field-title"
 					name="title"
 					type="text"
 					value={data.item.title}
 					required
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
 
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="field-slug">Slug</label>
+				<label class="block text-xs text-muted mb-1" for="field-slug">Slug</label>
 				<input
 					id="field-slug"
 					name="slug"
@@ -83,25 +84,25 @@
 					value={data.item.slug}
 					required
 					pattern="[-a-z0-9]+"
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
 
 			<div>
-				<label class="block text-xs text-gray-600 mb-1" for="field-full-path">URL completa</label>
+				<label class="block text-xs text-muted mb-1" for="field-full-path">URL completa</label>
 				<input
 					id="field-full-path"
 					name="full_path"
 					type="text"
 					value={data.item.full_path}
 					required
-					class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 			</div>
 
 			<div class="grid grid-cols-2 gap-4">
 				<div>
-					<label class="block text-xs text-gray-600 mb-1" for="field-order">Orden</label>
+					<label class="block text-xs text-muted mb-1" for="field-order">Orden</label>
 					<input
 						id="field-order"
 						name="order"
@@ -109,15 +110,15 @@
 						value={data.item.order}
 						min="1"
 						required
-						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					/>
 				</div>
 				<div>
-					<label class="block text-xs text-gray-600 mb-1" for="field-status">Estado</label>
+					<label class="block text-xs text-muted mb-1" for="field-status">Estado</label>
 					<select
 						id="field-status"
 						name="status"
-						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					>
 						<option value="draft" selected={data.item.status === 'draft'}>Borrador</option>
 						<option value="published" selected={data.item.status === 'published'}>Publicado</option>
@@ -127,12 +128,12 @@
 		</div>
 
 		{#if schema.fields.length > 0}
-			<div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
-				<h2 class="text-sm font-semibold text-gray-700">Campos de la colección</h2>
+			<div class="bg-white border border-border-subtle rounded-lg p-5 space-y-4">
+				<h2 class="text-sm font-semibold text-body">Campos de la colección</h2>
 
 				{#each schema.fields as field (field.key)}
 					<div>
-						<label class="block text-xs text-gray-600 mb-1" for="dyn-{field.key}">
+						<label class="block text-xs text-muted mb-1" for="dyn-{field.key}">
 							{field.label}
 						</label>
 
@@ -141,21 +142,21 @@
 								id="dyn-{field.key}"
 								name={field.key}
 								rows={6}
-								class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+								class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
 							>{fieldValue(field.key)}</textarea>
-							<p class="text-xs text-gray-400 mt-1">Un elemento por línea.</p>
+							<p class="text-xs text-faint mt-1">Un elemento por línea.</p>
 						{:else if field.type === 'textarea'}
 							<textarea
 								id="dyn-{field.key}"
 								name={field.key}
 								rows={6}
-								class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+								class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
 							>{fieldValue(field.key)}</textarea>
 						{:else if field.type === 'select'}
 							<select
 								id="dyn-{field.key}"
 								name={field.key}
-								class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+								class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 							>
 								{#each field.options ?? [] as opt (opt)}
 									<option value={opt} selected={fieldValue(field.key) === opt}>{opt}</option>
@@ -167,7 +168,7 @@
 								name={field.key}
 								type="text"
 								value={fieldValue(field.key)}
-								class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+								class="w-full border border-border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 							/>
 						{/if}
 					</div>
@@ -176,12 +177,7 @@
 		{/if}
 
 		<div class="flex items-center gap-3">
-			<button
-				type="submit"
-				class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-			>
-				Guardar cambios
-			</button>
+			<Button type="submit">Guardar cambios</Button>
 		</div>
 	</form>
 </div>
