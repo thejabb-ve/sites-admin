@@ -2,7 +2,9 @@
 	import NestedObjectEditor from './NestedObjectEditor.svelte';
 	import ArrayObjectEditor  from './ArrayObjectEditor.svelte';
 	import AssetPicker        from './AssetPicker.svelte';
+	import TextareaToolbar, { type ToolbarAction } from './TextareaToolbar.svelte';
 	import type { FieldDef }  from '$lib/blocks/schemaToFields';
+	import { toggleBold, toggleItalic, wrapBlockAlign, type TextAreaState } from '$lib/utils/textareaFormat';
 
 	let {
 		field,
@@ -46,6 +48,29 @@
 	const arrayStringsRows  = $derived(textareaRows ?? (size === 'lg' ? 3 : 2));
 	const jsonRows          = $derived(textareaRows ?? (size === 'lg' ? 4 : 2));
 	const textareaFieldRows = $derived(textareaRows ?? (size === 'lg' ? 6 : 3));
+
+	let textareaEl: HTMLTextAreaElement | undefined = $state();
+
+	const FORMAT_FNS: Record<ToolbarAction, (s: TextAreaState) => TextAreaState> = {
+		'bold':         toggleBold,
+		'italic':       toggleItalic,
+		'align-left':   (s) => wrapBlockAlign(s, 'left'),
+		'align-center': (s) => wrapBlockAlign(s, 'center'),
+		'align-right':  (s) => wrapBlockAlign(s, 'right'),
+	};
+
+	function applyFormat(action: ToolbarAction) {
+		if (!textareaEl) return;
+		const result = FORMAT_FNS[action]({
+			value:          textareaEl.value,
+			selectionStart: textareaEl.selectionStart,
+			selectionEnd:   textareaEl.selectionEnd,
+		});
+		onUpdate(result.value);
+		textareaEl.value = result.value;
+		textareaEl.focus();
+		textareaEl.setSelectionRange(result.selectionStart, result.selectionEnd);
+	}
 </script>
 
 {#if field.inputType === 'nested-object'}
@@ -125,8 +150,10 @@
 	></textarea>
 
 {:else if field.inputType === 'textarea'}
+	<TextareaToolbar onAction={applyFormat} />
 	<textarea
 		{id}
+		bind:this={textareaEl}
 		rows={textareaFieldRows}
 		oninput={(e) => onUpdate((e.target as HTMLTextAreaElement).value)}
 		class={textareaCls}

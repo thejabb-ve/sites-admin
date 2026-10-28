@@ -31,3 +31,6 @@ export const FooterPropsSchema = z.object({
     href:     z.string(),
   })).optional(),
 });
+
+export type HeaderProps = z.infer<typeof HeaderPropsSchema>;
+export type FooterProps = z.infer<typeof FooterPropsSchema>;

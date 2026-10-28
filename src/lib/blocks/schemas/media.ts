@@ -11,6 +11,8 @@ export const GalleryPropsSchema = z.object({
   columns: GridColumnsSchema,
 });
 
+export type GalleryProps = z.infer<typeof GalleryPropsSchema>;
+
 // ─── ArticleGrid ──────────────────────────────────────────────────────────────
 
 export const ArticleGridPropsSchema = z.object({
@@ -28,3 +30,5 @@ export const ArticleGridPropsSchema = z.object({
     }).optional(),
   })).min(1),
 });
+
+export type ArticleGridProps = z.infer<typeof ArticleGridPropsSchema>;

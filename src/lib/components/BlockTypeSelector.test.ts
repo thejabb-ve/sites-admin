@@ -42,11 +42,11 @@ describe('BlockTypeSelector — tipos de bloque disponibles', () => {
     render(BlockTypeSelector, {
       props: { open: true, onSelect: () => {} },
     });
-    // 10 bloques con scope 'page' (por defecto): hero, hero-split, richText, gallery,
-    // featureGrid, faq, pricing, countdown, form, cta.
+    // 12 bloques con scope 'page' (por defecto): hero, hero-split, richText,
+    // richTextColumns, gallery, featureGrid, cluster, faq, pricing, countdown, form, cta.
     const dialog = screen.getByRole('dialog');
     const buttons = dialog.querySelectorAll('div.grid > button');
-    expect(buttons.length).toBe(10);
+    expect(buttons.length).toBe(12);
   });
 
   it('muestra la etiqueta (label) de cada tipo de bloque', () => {

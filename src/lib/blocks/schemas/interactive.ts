@@ -42,3 +42,8 @@ export const CountdownPropsSchema = z.object({
     finished: CountdownPhaseConfigSchema,
   }),
 });
+
+export type FaqProps      = z.infer<typeof FaqPropsSchema>;
+export type PricingProps   = z.infer<typeof PricingPropsSchema>;
+export type CountdownProps = z.infer<typeof CountdownPropsSchema>;
+export type CountdownPhaseConfig = z.infer<typeof CountdownPhaseConfigSchema>;

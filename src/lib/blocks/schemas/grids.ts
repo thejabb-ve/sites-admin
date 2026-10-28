@@ -12,6 +12,8 @@ export const FeatureGridPropsSchema = z.object({
   columns: GridColumnsSchema,
 });
 
+export type FeatureGridProps = z.infer<typeof FeatureGridPropsSchema>;
+
 // ─── CollectionGrid ───────────────────────────────────────────────────────────
 
 const CollectionItemSchema = z.object({
@@ -29,6 +31,8 @@ export const CollectionGridPropsSchema = z.object({
   items:          z.array(CollectionItemSchema).default([]),
 });
 
+export type CollectionGridProps = z.infer<typeof CollectionGridPropsSchema>;
+
 // ─── Cluster ──────────────────────────────────────────────────────────────────
 
 export const ClusterPropsSchema = z.object({
@@ -45,3 +49,5 @@ export const ClusterPropsSchema = z.object({
   limit: z.number().int().min(1).default(9),
   more:  z.boolean().default(false),
 });
+
+export type ClusterProps = z.infer<typeof ClusterPropsSchema>;

@@ -3,9 +3,9 @@ import type { FieldInputType } from './schemaToFields';
 
 import { HeroCenteredPropsSchema, HeroSplitPropsSchema }          from './schemas/heros';
 import { HeaderPropsSchema, FooterPropsSchema }                    from './schemas/navigation';
-import { RichTextPropsSchema }                                     from './schemas/text';
+import { RichTextPropsSchema, RichTextColumnsPropsSchema }         from './schemas/text';
 import { GalleryPropsSchema }                                      from './schemas/media';
-import { FeatureGridPropsSchema }                                  from './schemas/grids';
+import { FeatureGridPropsSchema, ClusterPropsSchema }               from './schemas/grids';
 import { FaqPropsSchema, PricingPropsSchema, CountdownPropsSchema } from './schemas/interactive';
 import { FormPropsSchema }                                         from './schemas/forms';
 import { CtaPropsSchema }                                          from './schemas/ctas';
@@ -42,7 +42,10 @@ export const ADMIN_BLOCK_REGISTRY: Record<string, AdminBlockEntry> = {
 		label: 'Hero (imagen lateral)',
 		defaultProps: { heading: 'Título principal', imageUrl: '', imageAlt: '', reversed: false },
 		schema: HeroSplitPropsSchema,
-		fieldOverrides: { imageUrl: { inputType: 'asset-picker' } },
+		fieldOverrides: {
+			imageUrl: { inputType: 'asset-picker' },
+			text:     { inputType: 'textarea' },
+		},
 	},
 	'header': {
 		label: 'Encabezado (navegación)',
@@ -70,11 +73,36 @@ export const ADMIN_BLOCK_REGISTRY: Record<string, AdminBlockEntry> = {
 		schema: RichTextPropsSchema,
 		fieldOverrides: { content: { inputType: 'textarea' } },
 	},
+	'richTextColumns': {
+		label: 'Texto enriquecido (2 columnas)',
+		defaultProps: {
+			contentLeft:  '## Columna izquierda\n\nEscribe aquí tu contenido en **Markdown**.',
+			contentRight: '## Columna derecha\n\nEscribe aquí tu contenido en **Markdown**.',
+		},
+		schema: RichTextColumnsPropsSchema,
+		fieldOverrides: {
+			contentLeft:  { inputType: 'textarea' },
+			contentRight: { inputType: 'textarea' },
+		},
+	},
 	'gallery': {
 		label: 'Galería de imágenes',
 		defaultProps: { images: [{ src: '', alt: '' }], columns: 3 },
 		schema: GalleryPropsSchema,
 		itemFieldOverrides: { images: { src: { inputType: 'asset-picker' } } },
+	},
+	'cluster': {
+		label: 'Cluster de enlaces',
+		defaultProps: {
+			heading: '',
+			text: '',
+			data: [{ name: '', img: '', alt: '', href: '', target: '_self', rel: '' }],
+			limit: 9,
+			more: false,
+		},
+		schema: ClusterPropsSchema,
+		itemFieldOverrides: { data: { img: { inputType: 'asset-picker' } } },
+		fieldLabels: { data: 'Elementos' },
 	},
 	'featureGrid': {
 		label: 'Grid de características',

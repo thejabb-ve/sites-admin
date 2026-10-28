@@ -58,6 +58,55 @@ describe('FieldControl — tipo textarea', () => {
     await fireEvent.input(textarea);
     expect((onUpdate.mock.calls as unknown[][])[0][0]).toBe('contenido nuevo');
   });
+
+  it('muestra la toolbar de formato', () => {
+    render(FieldControl, {
+      props: { field: field('textarea'), value: '', id: 'campo', onUpdate: () => {} },
+    });
+    expect(document.querySelector('[role="toolbar"]')).toBeTruthy();
+  });
+
+  it('botón Negrita sin selección inserta ** ** con el cursor entre medio', async () => {
+    const onUpdate = mock(() => {});
+    render(FieldControl, {
+      props: { field: field('textarea'), value: 'hola', id: 'campo', onUpdate },
+    });
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    textarea.setSelectionRange(4, 4);
+    const boldBtn = screen.getByLabelText('Negrita');
+    await fireEvent.click(boldBtn);
+    expect((onUpdate.mock.calls as unknown[][])[0][0]).toBe('hola****');
+    expect(textarea.selectionStart).toBe(6);
+    expect(textarea.selectionEnd).toBe(6);
+  });
+
+  it('botón Centrar con selección envuelve el texto en :::center:::', async () => {
+    const onUpdate = mock(() => {});
+    render(FieldControl, {
+      props: { field: field('textarea'), value: 'hola mundo', id: 'campo', onUpdate },
+    });
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    textarea.setSelectionRange(0, 10);
+    const centerBtn = screen.getByLabelText('Centrar');
+    await fireEvent.click(centerBtn);
+    expect((onUpdate.mock.calls as unknown[][])[0][0]).toBe(':::center\nhola mundo\n:::');
+  });
+});
+
+describe('FieldControl — toolbar no aparece en otros tipos textarea', () => {
+  it('no muestra la toolbar para inputType json', () => {
+    render(FieldControl, {
+      props: { field: field('json'), value: {}, id: 'campo', onUpdate: () => {} },
+    });
+    expect(document.querySelector('[role="toolbar"]')).toBeFalsy();
+  });
+
+  it('no muestra la toolbar para inputType array-strings', () => {
+    render(FieldControl, {
+      props: { field: field('array-strings'), value: [], id: 'campo', onUpdate: () => {} },
+    });
+    expect(document.querySelector('[role="toolbar"]')).toBeFalsy();
+  });
 });
 
 describe('FieldControl — tipo number', () => {

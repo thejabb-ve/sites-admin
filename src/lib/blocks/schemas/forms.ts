@@ -26,3 +26,6 @@ export const FormPropsSchema = z.object({
   selectPlaceholder: z.string().default('Seleccionar...'),
   submittingLabel:   z.string().default('Enviando…'),
 });
+
+export type FormProps  = z.infer<typeof FormPropsSchema>;
+export type FormField  = z.infer<typeof FormFieldSchema>;
