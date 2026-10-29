@@ -99,12 +99,35 @@ describe('BlockList — editar bloque (BlockPropsPanel embebido)', () => {
 });
 
 describe('BlockList — eliminar bloque', () => {
-  it('pulsar "Eliminar bloque" envía el form oculto con el block_id correcto', async () => {
+  it('pulsar "Eliminar bloque" abre el diálogo de confirmación sin enviar el form todavía', async () => {
+    render(BlockList, { props: { serverBlocks: TWO_BLOCKS } });
+
+    const deleteButtons = screen.getAllByLabelText('Eliminar bloque');
+    await fireEvent.click(deleteButtons[0]!);
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    const blockIdInput = document.querySelector('input[name="block_id"]') as HTMLInputElement;
+    expect(blockIdInput.value).toBe('');
+  });
+
+  it('cancelar el diálogo no envía el form ni elimina el bloque', async () => {
+    render(BlockList, { props: { serverBlocks: TWO_BLOCKS } });
+
+    const deleteButtons = screen.getAllByLabelText('Eliminar bloque');
+    await fireEvent.click(deleteButtons[0]!);
+    await fireEvent.click(screen.getByText('Cancelar'));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getAllByRole('listitem').length).toBe(2);
+  });
+
+  it('confirmar en el diálogo envía el form oculto con el block_id correcto', async () => {
     (globalThis as { __mockActionResult?: unknown }).__mockActionResult = { type: 'success', status: 200 };
     render(BlockList, { props: { serverBlocks: TWO_BLOCKS } });
 
     const deleteButtons = screen.getAllByLabelText('Eliminar bloque');
     await fireEvent.click(deleteButtons[0]!);
+    await fireEvent.click(screen.getByText('Eliminar', { selector: 'button' }));
 
     const blockIdInput = document.querySelector('input[name="block_id"]') as HTMLInputElement;
     await waitFor(() => {
@@ -120,6 +143,7 @@ describe('BlockList — eliminar bloque', () => {
 
     const deleteButtons = screen.getAllByLabelText('Eliminar bloque');
     await fireEvent.click(deleteButtons[0]!);
+    await fireEvent.click(screen.getByText('Eliminar', { selector: 'button' }));
     await waitFor(() => {
       expect((document.querySelector('input[name="block_id"]') as HTMLInputElement).value).toBe('block-a');
     });
@@ -142,6 +166,7 @@ describe('BlockList — eliminar bloque', () => {
 
     const deleteButtons = screen.getAllByLabelText('Eliminar bloque');
     await fireEvent.click(deleteButtons[0]!);
+    await fireEvent.click(screen.getByText('Eliminar', { selector: 'button' }));
 
     await waitFor(() => {
       expect(screen.getAllByRole('listitem').length).toBe(1);
@@ -163,6 +188,7 @@ describe('BlockList — eliminar bloque', () => {
 
     const deleteButtons = screen.getAllByLabelText('Eliminar bloque');
     await fireEvent.click(deleteButtons[0]!);
+    await fireEvent.click(screen.getByText('Eliminar', { selector: 'button' }));
     await waitFor(() => {
       expect(screen.getAllByRole('listitem').length).toBe(1);
     });
@@ -186,6 +212,7 @@ describe('BlockList — eliminar bloque', () => {
 
     const deleteButtons = screen.getAllByLabelText('Eliminar bloque');
     await fireEvent.click(deleteButtons[0]!);
+    await fireEvent.click(screen.getByText('Eliminar', { selector: 'button' }));
     await waitFor(() => {
       expect((document.querySelector('input[name="block_id"]') as HTMLInputElement).value).toBe('block-a');
     });

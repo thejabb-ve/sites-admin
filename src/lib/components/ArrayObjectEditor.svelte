@@ -25,19 +25,61 @@
 	function updateItemField(i: number, key: string, val: unknown) {
 		onUpdate(value.map((item, idx) => idx === i ? { ...item, [key]: val } : item));
 	}
+
+	// ── Drag & drop (reordenar) ───────────────────────────────────────────────
+	let dragIndex   = $state<number | null>(null);
+	let dragOverIdx = $state<number | null>(null);
+
+	function handleDragStart(i: number) { dragIndex = i; }
+	function handleDragOver(e: DragEvent, i: number) { e.preventDefault(); dragOverIdx = i; }
+	function handleDragLeave() { dragOverIdx = null; }
+
+	function handleDrop(targetIdx: number) {
+		if (dragIndex === null || dragIndex === targetIdx) {
+			dragIndex   = null;
+			dragOverIdx = null;
+			return;
+		}
+		const reordered = [...value];
+		const [moved] = reordered.splice(dragIndex, 1);
+		reordered.splice(targetIdx, 0, moved!);
+		onUpdate(reordered);
+		dragIndex   = null;
+		dragOverIdx = null;
+	}
+
+	function handleDragEnd() {
+		dragIndex   = null;
+		dragOverIdx = null;
+	}
 </script>
 
-<div class="space-y-2">
+<div class="space-y-2" role="list">
 	{#each value as item, i (i)}
-		<div class="border border-border-subtle rounded-md p-3 relative bg-white">
-			<button
-				type="button"
-				onclick={() => removeItem(i)}
-				class="absolute top-2 right-2 text-faint hover:text-danger text-xs px-1"
-				aria-label="Eliminar elemento"
-			>✕</button>
+		<div
+			role="listitem"
+			draggable="true"
+			ondragstart={() => handleDragStart(i)}
+			ondragover={(e) => handleDragOver(e, i)}
+			ondragleave={handleDragLeave}
+			ondrop={() => handleDrop(i)}
+			ondragend={handleDragEnd}
+			class="border rounded-md p-3 bg-white transition-colors
+				{dragOverIdx === i && dragIndex !== i
+					? 'border-blue-400 ring-1 ring-blue-400'
+					: 'border-border-subtle'}"
+		>
+			<div class="flex items-center justify-between mb-1">
+				<span class="text-faint cursor-grab select-none text-lg leading-none" aria-hidden="true">⠿</span>
+				<button
+					type="button"
+					onclick={() => removeItem(i)}
+					class="text-faint hover:text-danger text-xs px-1"
+					aria-label="Eliminar elemento"
+				>✕</button>
+			</div>
 
-			<div class="space-y-2 pr-6">
+			<div class="space-y-2">
 				{#each field.itemFields ?? [] as subField (subField.key)}
 					{@const ctrlId = `aoe-${i}-${subField.key}`}
 					<div>

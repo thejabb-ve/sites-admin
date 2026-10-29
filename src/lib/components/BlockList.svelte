@@ -4,6 +4,7 @@
 	import { toast }   from '$lib/toast.svelte';
 	import { ADMIN_BLOCK_REGISTRY } from '$lib/blocks/adminRegistry';
 	import BlockPropsPanel from './BlockPropsPanel.svelte';
+	import ConfirmDialog    from './ConfirmDialog.svelte';
 	import type { ActionResult } from '@sveltejs/kit';
 	import type { Block } from '$lib/types';
 
@@ -25,6 +26,22 @@
 	let deleteFormEl     = $state<HTMLFormElement | undefined>();
 	let reorderFormEl    = $state<HTMLFormElement | undefined>();
 	let reorderIdsInput  = $state<HTMLInputElement | undefined>();
+
+	let confirmOpen    = $state(false);
+	let confirmMessage = $state('');
+	let blockIdPendingConfirm = '';
+
+	function askDeleteBlock(block: Block) {
+		confirmMessage = `¿Eliminar este bloque "${getLabel(block.type)}"? Esta acción no se puede deshacer.`;
+		blockIdPendingConfirm = block.id;
+		confirmOpen = true;
+	}
+
+	async function confirmDeleteBlock() {
+		deletePendingId = blockIdPendingConfirm;
+		await tick();
+		deleteFormEl?.requestSubmit();
+	}
 
 	// IDs borrados de forma optimista, aún no confirmados por el round-trip de
 	// invalidateAll(). Sin excluirlos de la comparación de abajo, el resync
@@ -141,11 +158,7 @@
 					<button
 						type="button"
 						aria-label="Eliminar bloque"
-						onclick={async () => {
-							deletePendingId = block.id;
-							await tick();
-							deleteFormEl?.requestSubmit();
-						}}
+						onclick={() => askDeleteBlock(block)}
 						class="text-xs px-2 py-1 rounded border border-border-subtle text-danger hover:border-red-300 hover:text-danger-hover transition-colors"
 					>
 						✕
@@ -206,6 +219,15 @@
 		</div>
 	{/if}
 </div>
+
+<ConfirmDialog
+	bind:open={confirmOpen}
+	title="Eliminar bloque"
+	message={confirmMessage}
+	confirmLabel="Eliminar"
+	danger={true}
+	onConfirm={confirmDeleteBlock}
+/>
 
 <!-- Form oculto: reordenar -->
 <form

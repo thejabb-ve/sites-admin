@@ -217,3 +217,56 @@ describe('ArrayObjectEditor — callbacks', () => {
     expect(items[0]).toEqual({ label: '', href: '', subMenu: [] });
   });
 });
+
+describe('ArrayObjectEditor — reordenar (drag & drop)', () => {
+  it('arrastrar el primer ítem sobre el segundo los intercambia', async () => {
+    const onUpdate = mock(() => {});
+    render(ArrayObjectEditor, {
+      props: { field: FAQ_FIELD, value: FAQ_VALUE, onUpdate },
+    });
+
+    const items = screen.getAllByRole('listitem');
+    await fireEvent.dragStart(items[0]!);
+    await fireEvent.dragOver(items[1]!);
+    await fireEvent.drop(items[1]!);
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    const [reordered] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
+    expect(reordered[0]).toEqual(FAQ_VALUE[1]);
+    expect(reordered[1]).toEqual(FAQ_VALUE[0]);
+  });
+
+  it('soltar sobre el mismo índice no llama a onUpdate', async () => {
+    const onUpdate = mock(() => {});
+    render(ArrayObjectEditor, {
+      props: { field: FAQ_FIELD, value: FAQ_VALUE, onUpdate },
+    });
+
+    const items = screen.getAllByRole('listitem');
+    await fireEvent.dragStart(items[0]!);
+    await fireEvent.dragOver(items[0]!);
+    await fireEvent.drop(items[0]!);
+
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it('con 3+ ítems, mover el último al principio reordena el resto correctamente', async () => {
+    const value = [
+      { question: 'Uno',   answer: 'A' },
+      { question: 'Dos',   answer: 'B' },
+      { question: 'Tres',  answer: 'C' },
+    ];
+    const onUpdate = mock(() => {});
+    render(ArrayObjectEditor, {
+      props: { field: FAQ_FIELD, value, onUpdate },
+    });
+
+    const items = screen.getAllByRole('listitem');
+    await fireEvent.dragStart(items[2]!);
+    await fireEvent.dragOver(items[0]!);
+    await fireEvent.drop(items[0]!);
+
+    const [reordered] = onUpdate.mock.calls[0] as unknown as [Record<string, unknown>[]];
+    expect(reordered).toEqual([value[2], value[0], value[1]]);
+  });
+});
